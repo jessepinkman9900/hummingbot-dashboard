@@ -1,9 +1,150 @@
 import { ApiResponse, PaginatedResponse } from '@/lib/types';
 
+// Function to get the base URL from health monitor settings
+export const getBaseURLFromHealthMonitor = (): string => {
+  if (typeof window === 'undefined') {
+    return 'http://localhost:8000'; // Default for SSR
+  }
+
+  try {
+    const selectedUrlId = localStorage.getItem('healthMonitorSelectedUrl');
+    const savedUrls = localStorage.getItem('healthMonitorUrls');
+
+    if (selectedUrlId && savedUrls) {
+      const urls = JSON.parse(savedUrls);
+      const selectedUrl = urls.find((url: any) => url.id === selectedUrlId);
+      return selectedUrl.url;
+    }
+  } catch (error) {
+    console.warn('Failed to get base URL from health monitor:', error);
+  }
+
+  // Fallback to default
+  return 'http://localhost:8000';
+};
+
+// Function to get basic auth credentials from health monitor settings
+const getBasicAuthFromHealthMonitor = (): {
+  username: string;
+  password: string;
+} | null => {
+  if (typeof window === 'undefined') {
+    console.log('[Auth] Window undefined (SSR)');
+    return null;
+  }
+
+  try {
+    const selectedUrlId = localStorage.getItem('healthMonitorSelectedUrl');
+    const savedUrls = localStorage.getItem('healthMonitorUrls');
+
+    console.log('[Auth] localStorage check:', {
+      selectedUrlId,
+      hasSavedUrls: !!savedUrls,
+    });
+
+    if (selectedUrlId && savedUrls) {
+      const urls = JSON.parse(savedUrls);
+      const selectedUrl = urls.find((url: any) => url.id === selectedUrlId);
+
+      console.log('[Auth] Selected URL:', {
+        found: !!selectedUrl,
+        hasUsername: !!selectedUrl?.username,
+        hasPassword: !!selectedUrl?.password,
+        username: selectedUrl?.username,
+      });
+
+      if (selectedUrl?.username && selectedUrl?.password) {
+        return {
+          username: selectedUrl.username,
+          password: selectedUrl.password,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get basic auth from health monitor:', error);
+  }
+
+  // Fallback to stored credentials
+  console.log(
+    '[Auth] No credentials from health monitor, checking stored credentials'
+  );
+  try {
+    const stored = localStorage.getItem('basicAuthCredentials');
+    if (stored) {
+      const credentials = JSON.parse(stored);
+      console.log('[Auth] Using stored credentials as fallback');
+      return credentials;
+    }
+  } catch (error) {
+    console.warn('[Auth] Failed to get stored credentials:', error);
+  }
+
+  console.log('[Auth] No credentials found');
+  return null;
+};
+
+// Function to store basic auth credentials in localStorage
+export const storeBasicAuthCredentials = (
+  username: string,
+  password: string
+): void => {
+  if (typeof window === 'undefined') {
+    console.warn('[Auth] Cannot store credentials - window undefined (SSR)');
+    return;
+  }
+
+  try {
+    const credentials = { username, password };
+    localStorage.setItem('basicAuthCredentials', JSON.stringify(credentials));
+    console.log('[Auth] Stored basic auth credentials to localStorage');
+  } catch (error) {
+    console.error('[Auth] Failed to store credentials:', error);
+  }
+};
+
+// Function to get basic auth credentials from localStorage (fallback)
+export const getStoredBasicAuthCredentials = (): {
+  username: string;
+  password: string;
+} | null => {
+  if (typeof window === 'undefined') {
+    console.log('[Auth] Window undefined (SSR)');
+    return null;
+  }
+
+  try {
+    const stored = localStorage.getItem('basicAuthCredentials');
+    if (stored) {
+      const credentials = JSON.parse(stored);
+      console.log('[Auth] Retrieved stored basic auth credentials');
+      return credentials;
+    }
+  } catch (error) {
+    console.warn('[Auth] Failed to get stored credentials:', error);
+  }
+
+  console.log('[Auth] No stored credentials found');
+  return null;
+};
+
+// Function to clear stored basic auth credentials
+export const clearStoredBasicAuthCredentials = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.removeItem('basicAuthCredentials');
+    console.log('[Auth] Cleared stored basic auth credentials');
+  } catch (error) {
+    console.error('[Auth] Failed to clear stored credentials:', error);
+  }
+};
+
 // API Configuration
 export const API_CONFIG = {
   baseURL:
-    process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1',
+    process.env.NEXT_PUBLIC_API_BASE_URL || getBaseURLFromHealthMonitor(),
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,
@@ -120,10 +261,12 @@ async function withRetry<T>(
 
 // API Client Class
 export class ApiClient {
-  private baseURL: string;
+  constructor() {}
 
-  constructor(baseURL: string = API_CONFIG.baseURL) {
-    this.baseURL = baseURL;
+  private getBaseURL(): string {
+    return (
+      process.env.NEXT_PUBLIC_API_BASE_URL || getBaseURLFromHealthMonitor()
+    );
   }
 
   private async makeRequest<T>(
@@ -138,8 +281,7 @@ export class ApiClient {
       retryAttempts = API_CONFIG.retryAttempts,
     } = config;
 
-    const url = `${this.baseURL}${endpoint}`;
-    const token = tokenManager.getToken();
+    const url = `${this.getBaseURL()}${endpoint}`;
 
     // Prepare headers
     const requestHeaders: Record<string, string> = {
@@ -147,8 +289,20 @@ export class ApiClient {
       ...headers,
     };
 
-    if (token) {
-      requestHeaders.Authorization = `Bearer ${token}`;
+    // Add Basic Auth if credentials are available from health monitor
+    const basicAuth = getBasicAuthFromHealthMonitor();
+    if (basicAuth) {
+      const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+      requestHeaders.Authorization = `Basic ${credentials}`;
+      console.log(`[API Client] Adding Basic Auth for ${endpoint}:`, {
+        username: basicAuth.username,
+        hasPassword: !!basicAuth.password,
+        authHeader: `Basic ${credentials.substring(0, 10)}...`,
+      });
+    } else {
+      console.log(
+        `[API Client] No Basic Auth credentials found for ${endpoint}`
+      );
     }
 
     // Prepare request options
@@ -170,6 +324,10 @@ export class ApiClient {
         // Handle non-JSON responses
         const contentType = response.headers.get('content-type');
         if (!contentType?.includes('application/json')) {
+          console.error(
+            `[API Client] Invalid content type for ${endpoint}:`,
+            contentType
+          );
           throw new ApiError(
             'Invalid response format',
             response.status,
@@ -177,9 +335,26 @@ export class ApiClient {
           );
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error(
+            `[API Client] Failed to parse JSON for ${endpoint}:`,
+            parseError
+          );
+          throw new ApiError(
+            'Invalid JSON response',
+            response.status,
+            'INVALID_JSON'
+          );
+        }
 
         if (!response.ok) {
+          console.error(`[API Client] HTTP error for ${endpoint}:`, {
+            status: response.status,
+            data,
+          });
           throw new ApiError(
             data.message || `HTTP ${response.status}`,
             response.status,
@@ -188,7 +363,19 @@ export class ApiClient {
           );
         }
 
-        return data as ApiResponse<T>;
+        console.log(`[API Client] Successful response for ${endpoint}:`, {
+          status: response.status,
+          dataType: typeof data,
+          dataLength: Array.isArray(data) ? data.length : undefined,
+        });
+
+        // Wrap the response data in ApiResponse format
+        return {
+          data: data as T,
+          status: response.status,
+          message: 'Success',
+          timestamp: new Date(),
+        } as ApiResponse<T>;
       } catch (error) {
         if (error instanceof TypeError && error.message.includes('fetch')) {
           throw new NetworkError('Network connection failed');
@@ -291,32 +478,6 @@ export class ApiClient {
 // Default API client instance
 export const apiClient = new ApiClient();
 
-// Request interceptor for automatic token refresh
-const originalMakeRequest = (apiClient as any)['makeRequest'].bind(apiClient);
-(apiClient as any)['makeRequest'] = async function <T>(
-  this: ApiClient,
-  endpoint: string,
-  config: RequestConfig = {}
-) {
-  try {
-    return await originalMakeRequest(endpoint, config);
-  } catch (error) {
-    if (
-      error instanceof ApiError &&
-      error.status === 401 &&
-      endpoint !== '/auth/refresh'
-    ) {
-      try {
-        await this.refreshAuthToken();
-        return await originalMakeRequest(endpoint, config);
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        throw refreshError;
-      }
-    }
-    throw error;
-  }
-};
+// For now, disable auth interceptor since Hummingbot API uses Basic Auth
+// TODO: Implement proper Basic Auth handling when credentials are available
+// The Hummingbot API uses HTTP Basic Authentication, not JWT tokens

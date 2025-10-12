@@ -27,6 +27,7 @@ import {
   Activity,
   Users,
   Clock,
+  TestTube,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -80,6 +81,16 @@ const navigationItems = [
         title: 'Settings',
         url: '/settings',
         icon: Settings,
+      },
+    ],
+  },
+  {
+    title: 'Development',
+    items: [
+      {
+        title: 'API Test',
+        url: '/api-test',
+        icon: TestTube,
       },
     ],
   },

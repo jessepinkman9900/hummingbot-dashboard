@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Activity, Plus, Trash2, ExternalLink, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { storeBasicAuthCredentials } from '@/lib/api/client';
 
 interface HealthUrl {
   id: string;
@@ -17,6 +18,8 @@ interface HealthUrl {
   status: 'healthy' | 'warning' | 'error' | 'checking';
   lastChecked?: Date;
   responseTime?: number;
+  username?: string;
+  password?: string;
 }
 
 interface HealthStatusButtonProps {
@@ -27,53 +30,65 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingUrl, setIsAddingUrl] = useState(false);
   const [editingUrlId, setEditingUrlId] = useState<string | null>(null);
-  const [newUrl, setNewUrl] = useState({ name: '', url: '' });
-  const [editUrl, setEditUrl] = useState({ name: '', url: '' });
+  const [newUrl, setNewUrl] = useState({ name: '', url: '', username: '', password: '' });
+  const [editUrl, setEditUrl] = useState({ name: '', url: '', username: '', password: '' });
 
-  // Initialize URLs from localStorage or use default
-  const [urls, setUrls] = useState<HealthUrl[]>(() => {
+  // Initialize URLs - start with default to avoid hydration mismatch
+  const [urls, setUrls] = useState<HealthUrl[]>([
+    {
+      id: '1',
+      name: 'Hummingbot API',
+      url: 'http://localhost:8000/',
+      status: 'error' as const,
+      lastChecked: undefined,
+      responseTime: undefined,
+      username: 'admin',
+      password: 'admin',
+    }
+  ]);
+
+  // Initialize selected URL - start with default to avoid hydration mismatch
+  const [selectedUrlId, setSelectedUrlId] = useState<string>('1');
+
+  const selectedUrl = urls.find(url => url.id === selectedUrlId);
+  const currentStatus = selectedUrl?.status || 'error';
+
+  // Load data from localStorage after component mounts to avoid hydration issues
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const savedUrls = localStorage.getItem('healthMonitorUrls');
+        const savedSelectedId = localStorage.getItem('healthMonitorSelectedUrl');
+        
         if (savedUrls) {
           const parsedUrls = JSON.parse(savedUrls);
           // Convert date strings back to Date objects
-          return parsedUrls.map((url: any) => ({
+          const urlsWithDates = parsedUrls.map((url: any) => ({
             ...url,
-            lastChecked: url.lastChecked ? new Date(url.lastChecked) : null,
+            lastChecked: url.lastChecked ? new Date(url.lastChecked) : undefined,
           }));
+          setUrls(urlsWithDates);
+        } else {
+          // Save default URLs if none exist
+          localStorage.setItem('healthMonitorUrls', JSON.stringify(urls));
+        }
+        
+        if (savedSelectedId) {
+          setSelectedUrlId(savedSelectedId);
+        } else {
+          localStorage.setItem('healthMonitorSelectedUrl', selectedUrlId);
+        }
+        
+        // Store default admin credentials if no data exists
+        if (!savedUrls || !savedSelectedId) {
+          storeBasicAuthCredentials('admin', 'admin');
+          console.log('[HealthStatus] Stored default admin credentials');
         }
       } catch (error) {
         console.warn('Failed to load health URLs from localStorage:', error);
       }
     }
-    
-    // Default URLs if nothing in localStorage
-    return [
-      {
-        id: '1',
-        name: 'Hummingbot API',
-        url: 'http://localhost:8000/health',
-        status: 'error' as const,
-        lastChecked: null,
-        responseTime: undefined,
-      }
-    ];
-  });
-
-  // Initialize selected URL from localStorage or use default
-  const [selectedUrlId, setSelectedUrlId] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const savedSelectedId = localStorage.getItem('healthMonitorSelectedUrl');
-      if (savedSelectedId) {
-        return savedSelectedId;
-      }
-    }
-    return '1'; // Default to first URL ID
-  });
-
-  const selectedUrl = urls.find(url => url.id === selectedUrlId);
-  const currentStatus = selectedUrl?.status || 'error';
+  }, []); // Run only once on mount
 
   // Save URLs to localStorage whenever they change
   useEffect(() => {
@@ -91,11 +106,17 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('healthMonitorSelectedUrl', selectedUrlId);
+        
+        // Also store credentials of the selected URL separately
+        const selectedUrl = urls.find(url => url.id === selectedUrlId);
+        if (selectedUrl?.username && selectedUrl?.password) {
+          storeBasicAuthCredentials(selectedUrl.username, selectedUrl.password);
+        }
       } catch (error) {
         console.warn('Failed to save selected URL to localStorage:', error);
       }
     }
-  }, [selectedUrlId]);
+  }, [selectedUrlId, urls]);
 
   // Ensure selectedUrlId is valid when URLs change
   useEffect(() => {
@@ -117,12 +138,20 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+      };
+
+      // Add Basic Auth if credentials are provided
+      if (url.username && url.password) {
+        const credentials = btoa(`${url.username}:${url.password}`);
+        headers.Authorization = `Basic ${credentials}`;
+      }
+
       const response = await fetch(url.url, {
         method: 'GET',
         signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers,
       });
 
       clearTimeout(timeoutId);
@@ -202,11 +231,19 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
       name: newUrl.name.trim(),
       url: newUrl.url.trim(),
       status: 'error', // Default to error until first check
+      username: newUrl.username.trim(),
+      password: newUrl.password.trim(),
     };
 
     setUrls(prev => [...prev, newHealthUrl]);
     setSelectedUrlId(newHealthUrl.id);
-    setNewUrl({ name: '', url: '' });
+    
+    // Store credentials separately in localStorage if provided
+    if (newUrl.username.trim() && newUrl.password.trim()) {
+      storeBasicAuthCredentials(newUrl.username.trim(), newUrl.password.trim());
+    }
+    
+    setNewUrl({ name: '', url: '', username: '', password: '' });
     setIsAddingUrl(false);
     toast.success('URL added successfully');
   };
@@ -214,7 +251,12 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
   // Start editing URL
   const handleStartEdit = (url: HealthUrl) => {
     setEditingUrlId(url.id);
-    setEditUrl({ name: url.name, url: url.url });
+    setEditUrl({ 
+      name: url.name, 
+      url: url.url,
+      username: url.username || '',
+      password: url.password || ''
+    });
     setIsAddingUrl(false);
   };
 
@@ -227,19 +269,31 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
 
     setUrls(prev => prev.map(url => 
       url.id === editingUrlId 
-        ? { ...url, name: editUrl.name.trim(), url: editUrl.url.trim(), status: 'error' as const }
+        ? { 
+            ...url, 
+            name: editUrl.name.trim(), 
+            url: editUrl.url.trim(), 
+            username: editUrl.username.trim(),
+            password: editUrl.password.trim(),
+            status: 'error' as const 
+          }
         : url
     ));
     
+    // Store credentials separately in localStorage if provided
+    if (editUrl.username.trim() && editUrl.password.trim()) {
+      storeBasicAuthCredentials(editUrl.username.trim(), editUrl.password.trim());
+    }
+    
     setEditingUrlId(null);
-    setEditUrl({ name: '', url: '' });
+    setEditUrl({ name: '', url: '', username: '', password: '' });
     toast.success('URL updated successfully');
   };
 
   // Cancel editing
   const handleCancelEdit = () => {
     setEditingUrlId(null);
-    setEditUrl({ name: '', url: '' });
+    setEditUrl({ name: '', url: '', username: '', password: '' });
   };
 
   // Remove URL
@@ -257,8 +311,30 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('healthMonitorUrls');
       localStorage.removeItem('healthMonitorSelectedUrl');
+      console.log('[HealthStatus] Cleared localStorage, reloading...');
       window.location.reload();
     }
+  };
+
+  // Reset to default configuration
+  const handleResetToDefaults = () => {
+    const defaultUrls: HealthUrl[] = [
+      {
+        id: '1',
+        name: 'Hummingbot API',
+        url: 'http://localhost:8000/health',
+        status: 'error' as const,
+        lastChecked: undefined,
+        responseTime: undefined,
+        username: 'admin',
+        password: 'admin',
+      }
+    ];
+    
+    setUrls(defaultUrls);
+    setSelectedUrlId('1');
+    console.log('[HealthStatus] Reset to default configuration');
+    toast.success('Reset to default configuration');
   };
 
   // Auto-check health every 10 seconds for selected URL
@@ -444,6 +520,25 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
                     onChange={(e) => setNewUrl(prev => ({ ...prev, url: e.target.value }))}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="url-username">Username (Optional)</Label>
+                  <Input
+                    id="url-username"
+                    placeholder="Basic Auth username"
+                    value={newUrl.username}
+                    onChange={(e) => setNewUrl(prev => ({ ...prev, username: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="url-password">Password (Optional)</Label>
+                  <Input
+                    id="url-password"
+                    type="password"
+                    placeholder="Basic Auth password"
+                    value={newUrl.password}
+                    onChange={(e) => setNewUrl(prev => ({ ...prev, password: e.target.value }))}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleAddUrl}>
                     Add URL
@@ -486,6 +581,25 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
                               value={editUrl.url}
                               onChange={(e) => setEditUrl(prev => ({ ...prev, url: e.target.value }))}
                               placeholder="https://example.com/health"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-username-${url.id}`}>Username (Optional)</Label>
+                            <Input
+                              id={`edit-username-${url.id}`}
+                              value={editUrl.username}
+                              onChange={(e) => setEditUrl(prev => ({ ...prev, username: e.target.value }))}
+                              placeholder="Basic Auth username"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor={`edit-password-${url.id}`}>Password (Optional)</Label>
+                            <Input
+                              id={`edit-password-${url.id}`}
+                              type="password"
+                              value={editUrl.password}
+                              onChange={(e) => setEditUrl(prev => ({ ...prev, password: e.target.value }))}
+                              placeholder="Basic Auth password"
                             />
                           </div>
                           <div className="flex gap-2">
@@ -556,14 +670,24 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
               <div className="text-xs text-muted-foreground border-t pt-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span>💾 Data persisted to localStorage</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearStorage}
-                    className="text-xs h-6 px-2"
-                  >
-                    Clear Storage
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetToDefaults}
+                      className="text-xs h-6 px-2"
+                    >
+                      Reset Defaults
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearStorage}
+                      className="text-xs h-6 px-2"
+                    >
+                      Clear Storage
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>🔄 Auto-polling every 10 seconds</span>

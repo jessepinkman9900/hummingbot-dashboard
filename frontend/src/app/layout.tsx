@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Merriweather, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/lib/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const merriweather = Merriweather({
   weight: ['300', '400', '700'],
@@ -33,6 +34,7 @@ export default function RootLayout({
         <QueryProvider>
           {children}
         </QueryProvider>
+        <Toaster />
       </body>
     </html>
   );

@@ -282,3 +282,79 @@ export interface TimeRange {
   start: Date;
   end: Date;
 }
+
+// Portfolio API Response Types
+export interface PortfolioStateResponse {
+  accounts: Record<string, AccountState>;
+  total_balance: number;
+  total_pnl: number;
+  total_pnl_percentage: number;
+  timestamp: string;
+}
+
+export interface AccountState {
+  connectors: Record<string, ConnectorBalance>;
+  total_balance: number;
+  total_pnl: number;
+  total_pnl_percentage: number;
+}
+
+export interface ConnectorBalance {
+  balances: Record<string, TokenBalance>;
+  total_balance: number;
+  available_balance: number;
+  total_pnl: number;
+  total_pnl_percentage: number;
+}
+
+export interface TokenBalance {
+  balance: number;
+  available_balance: number;
+  usd_value: number;
+  percentage: number;
+}
+
+export interface PortfolioHistoryResponse {
+  data: PortfolioSnapshot[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface PortfolioDistributionResponse {
+  tokens: Record<string, TokenDistribution>;
+  total_value: number;
+  timestamp: string;
+}
+
+export interface TokenDistribution {
+  value: number;
+  percentage: number;
+  accounts: Record<string, AccountTokenBreakdown>;
+}
+
+export interface AccountTokenBreakdown {
+  value: number;
+  percentage: number;
+  connectors: Record<string, number>;
+}
+
+export interface AccountsDistributionResponse {
+  accounts: Record<string, AccountDistribution>;
+  total_value: number;
+  timestamp: string;
+}
+
+export interface AccountDistribution {
+  value: number;
+  percentage: number;
+  connectors: Record<string, ConnectorDistribution>;
+}
+
+export interface ConnectorDistribution {
+  value: number;
+  percentage: number;
+}
