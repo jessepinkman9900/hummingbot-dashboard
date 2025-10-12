@@ -1,0 +1,835 @@
+openapi: 3.0.3
+info:
+  title: Hummingbot Dashboard API
+  description: API contracts for the Hummingbot Dashboard Frontend
+  version: 1.0.0
+  contact:
+    name: Hummingbot Dashboard Team
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.hummingbot.local/v1
+    description: Production server
+
+paths:
+  # Authentication endpoints
+  /auth/login:
+    post:
+      summary: Authenticate user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+
+  /auth/refresh:
+    post:
+      summary: Refresh authentication token
+      operationId: refreshToken
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  # User endpoints
+  /user/profile:
+    get:
+      summary: Get user profile
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    put:
+      summary: Update user preferences
+      operationId: updateUserPreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # Portfolio endpoints
+  /portfolio:
+    get:
+      summary: Get portfolio overview
+      operationId: getPortfolio
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Portfolio data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+
+  /portfolio/history:
+    get:
+      summary: Get portfolio performance history
+      operationId: getPortfolioHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 4h, 1d, 7d, 30d]
+            default: 1d
+        - name: interval
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 4h, 1d]
+            default: 1h
+      responses:
+        '200':
+          description: Portfolio history data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioSnapshot'
+
+  # Bot management endpoints
+  /bots:
+    get:
+      summary: List user's bots
+      operationId: getBots
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BotStatus'
+      responses:
+        '200':
+          description: List of bots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BotInstance'
+
+    post:
+      summary: Create new bot
+      operationId: createBot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBotRequest'
+      responses:
+        '201':
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotInstance'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /bots/{botId}:
+    get:
+      summary: Get bot details
+      operationId: getBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotInstance'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update bot configuration
+      operationId: updateBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotConfig'
+      responses:
+        '200':
+          description: Bot updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotInstance'
+
+    delete:
+      summary: Delete bot
+      operationId: deleteBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Bot deleted
+
+  /bots/{botId}/start:
+    post:
+      summary: Start bot
+      operationId: startBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot start initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotInstance'
+
+  /bots/{botId}/stop:
+    post:
+      summary: Stop bot
+      operationId: stopBot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bot stop initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotInstance'
+
+  # Exchange account endpoints
+  /accounts:
+    get:
+      summary: List exchange accounts
+      operationId: getAccounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of exchange accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeAccount'
+
+    post:
+      summary: Add exchange account
+      operationId: createAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeAccount'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /accounts/{accountId}:
+    delete:
+      summary: Remove exchange account
+      operationId: deleteAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Account deleted
+
+  /accounts/{accountId}/test:
+    post:
+      summary: Test exchange connection
+      operationId: testConnection
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionTestResult'
+
+  # Market data endpoints
+  /market/{symbol}:
+    get:
+      summary: Get market data for symbol
+      operationId: getMarketData
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: exchange
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Market data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketData'
+
+  /market/{symbol}/orderbook:
+    get:
+      summary: Get order book data
+      operationId: getOrderBook
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: exchange
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Order book data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderBook'
+
+  # System status endpoints
+  /system/status:
+    get:
+      summary: Get system health status
+      operationId: getSystemStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: System status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+
+  # WebSocket endpoint for real-time updates
+  /ws:
+    get:
+      summary: WebSocket connection for real-time data
+      operationId: connectWebSocket
+      security:
+        - bearerAuth: []
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Authentication schemas
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+
+    # User schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+
+    UserPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark]
+          default: light
+        currency:
+          type: string
+          default: USD
+        refreshInterval:
+          type: integer
+          minimum: 1
+          maximum: 300
+          default: 5
+        notificationSettings:
+          $ref: '#/components/schemas/NotificationSettings'
+
+    NotificationSettings:
+      type: object
+      properties:
+        email:
+          type: boolean
+          default: true
+        browser:
+          type: boolean
+          default: true
+        botErrors:
+          type: boolean
+          default: true
+        tradeAlerts:
+          type: boolean
+          default: false
+
+    # Portfolio schemas
+    Portfolio:
+      type: object
+      properties:
+        userId:
+          type: string
+        totalBalance:
+          type: number
+          format: decimal
+        totalPnL:
+          type: number
+          format: decimal
+        totalPnLPercentage:
+          type: number
+          format: decimal
+        assetDistribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetBalance'
+        lastUpdated:
+          type: string
+          format: date-time
+
+    PortfolioSnapshot:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        totalBalance:
+          type: number
+          format: decimal
+        totalPnL:
+          type: number
+          format: decimal
+
+    AssetBalance:
+      type: object
+      properties:
+        asset:
+          type: string
+        available:
+          type: number
+          format: decimal
+        locked:
+          type: number
+          format: decimal
+        total:
+          type: number
+          format: decimal
+
+    # Bot schemas
+    BotInstance:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        strategy:
+          type: string
+        status:
+          $ref: '#/components/schemas/BotStatus'
+        config:
+          $ref: '#/components/schemas/BotConfig'
+        performance:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        createdAt:
+          type: string
+          format: date-time
+        lastActiveAt:
+          type: string
+          format: date-time
+
+    BotStatus:
+      type: string
+      enum: [stopped, starting, running, stopping, error]
+
+    BotConfig:
+      type: object
+      properties:
+        strategy:
+          type: string
+        tradingPair:
+          type: string
+        exchange:
+          type: string
+        parameters:
+          type: object
+          additionalProperties: true
+
+    CreateBotRequest:
+      type: object
+      required: [name, strategy, config]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        strategy:
+          type: string
+        config:
+          $ref: '#/components/schemas/BotConfig'
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        botId:
+          type: string
+        totalTrades:
+          type: integer
+        totalVolume:
+          type: number
+          format: decimal
+        totalPnL:
+          type: number
+          format: decimal
+        totalPnLPercentage:
+          type: number
+          format: decimal
+        winRate:
+          type: number
+          format: decimal
+        averageTradeSize:
+          type: number
+          format: decimal
+        maxDrawdown:
+          type: number
+          format: decimal
+        sharpeRatio:
+          type: number
+          format: decimal
+
+    # Exchange account schemas
+    ExchangeAccount:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        exchange:
+          type: string
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/ConnectionStatus'
+        balance:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetBalance'
+        lastSyncAt:
+          type: string
+          format: date-time
+
+    ConnectionStatus:
+      type: string
+      enum: [connected, disconnected, error, authenticating]
+
+    CreateAccountRequest:
+      type: object
+      required: [exchange, name, credentials]
+      properties:
+        exchange:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        credentials:
+          $ref: '#/components/schemas/ExchangeCredentials'
+
+    ExchangeCredentials:
+      type: object
+      required: [apiKey, secretKey]
+      properties:
+        apiKey:
+          type: string
+        secretKey:
+          type: string
+        passphrase:
+          type: string
+        sandbox:
+          type: boolean
+          default: false
+
+    ConnectionTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        latency:
+          type: integer
+        permissions:
+          type: array
+          items:
+            type: string
+
+    # Market data schemas
+    MarketData:
+      type: object
+      properties:
+        symbol:
+          type: string
+        price:
+          type: number
+          format: decimal
+        volume24h:
+          type: number
+          format: decimal
+        priceChange24h:
+          type: number
+          format: decimal
+        priceChangePercent24h:
+          type: number
+          format: decimal
+        timestamp:
+          type: string
+          format: date-time
+
+    OrderBook:
+      type: object
+      properties:
+        bids:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: decimal
+            minItems: 2
+            maxItems: 2
+        asks:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: decimal
+            minItems: 2
+            maxItems: 2
+        timestamp:
+          type: string
+          format: date-time
+
+    # System schemas
+    SystemStatus:
+      type: object
+      properties:
+        overall:
+          type: string
+          enum: [healthy, degraded, down]
+        services:
+          type: object
+          properties:
+            api:
+              $ref: '#/components/schemas/ServiceStatus'
+            database:
+              $ref: '#/components/schemas/ServiceStatus'
+            docker:
+              $ref: '#/components/schemas/ServiceStatus'
+            websocket:
+              $ref: '#/components/schemas/ServiceStatus'
+        timestamp:
+          type: string
+          format: date-time
+
+    ServiceStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [up, down, degraded]
+        latency:
+          type: integer
+        message:
+          type: string
+
+    # Error schemas
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
