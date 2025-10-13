@@ -67,16 +67,20 @@ export default function MarketDataPage() {
   };
 
   // Calculate chart statistics
-  const chartStats = chartData.length > 0 ? {
-    totalRecords: chartData.length,
-    firstCandle: chartData[0],
-    lastCandle: chartData[chartData.length - 1],
-    highPrice: Math.max(...chartData.map(d => d.high)),
-    lowPrice: Math.min(...chartData.map(d => d.low)),
-    totalVolume: chartData.reduce((sum, d) => sum + (d.volume || 0), 0),
-    priceChange: chartData[chartData.length - 1]?.close - chartData[0]?.open,
-    priceChangePercent: ((chartData[chartData.length - 1]?.close - chartData[0]?.open) / chartData[0]?.open) * 100
-  } : null;
+  const chartStats = chartData.length > 0 ? (() => {
+    // Sort data by timestamp for consistent first/last calculations
+    const sortedData = [...chartData].sort((a, b) => a.timestamp - b.timestamp);
+    return {
+      totalRecords: sortedData.length,
+      firstCandle: sortedData[0],
+      lastCandle: sortedData[sortedData.length - 1],
+      highPrice: Math.max(...sortedData.map(d => d.high)),
+      lowPrice: Math.min(...sortedData.map(d => d.low)),
+      totalVolume: sortedData.reduce((sum, d) => sum + (d.volume || 0), 0),
+      priceChange: sortedData[sortedData.length - 1]?.close - sortedData[0]?.open,
+      priceChangePercent: ((sortedData[sortedData.length - 1]?.close - sortedData[0]?.open) / sortedData[0]?.open) * 100
+    };
+  })() : null;
 
   return (
     <MainLayout>

@@ -37,8 +37,11 @@ export function LightweightChart({
 
   // Convert our data format to TradingView format
   const convertToChartData = useCallback((rawData: CandleData[]): CandlestickData[] | LineData[] => {
+    // Sort data by timestamp in ascending order (required by lightweight-charts)
+    const sortedData = [...rawData].sort((a, b) => a.timestamp - b.timestamp);
+    
     if (chartType === 'candlestick') {
-      return rawData.map(candle => ({
+      return sortedData.map(candle => ({
         time: candle.timestamp as UTCTimestamp,
         open: candle.open,
         high: candle.high,
@@ -46,7 +49,7 @@ export function LightweightChart({
         close: candle.close,
       }));
     } else {
-      return rawData.map(candle => ({
+      return sortedData.map(candle => ({
         time: candle.timestamp as UTCTimestamp,
         value: candle.close,
       }));
