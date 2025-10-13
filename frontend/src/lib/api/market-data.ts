@@ -29,7 +29,7 @@ export interface MarketDataApiClient {
   getCandles: (
     request: CandlesRequest
   ) => Promise<ApiResponse<CandlesResponse>>;
-  getAvailableConnectors: () => Promise<ApiResponse<string[]>>;
+  getAvailableMarketDataConnectors: () => Promise<ApiResponse<string[]>>;
 }
 
 export const marketDataApi: MarketDataApiClient = {
@@ -44,7 +44,7 @@ export const marketDataApi: MarketDataApiClient = {
     });
   },
 
-  async getAvailableConnectors(): Promise<ApiResponse<string[]>> {
-    return apiClient.get<string[]>('/connectors');
+  async getAvailableMarketDataConnectors(): Promise<ApiResponse<string[]>> {
+    return apiClient.get<string[]>('/market-data/available-candle-connectors');
   },
 };

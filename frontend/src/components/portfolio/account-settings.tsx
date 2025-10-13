@@ -210,9 +210,9 @@ export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
           {loadingCredentials ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={i} className="flex items-center justify-between p-4 border rounded-md">
                   <div className="flex items-center space-x-4">
-                    <Skeleton className="h-10 w-10 rounded" />
+                    <Skeleton className="h-10 w-10 rounded-md" />
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-[120px]" />
                       <Skeleton className="h-3 w-[80px]" />
@@ -245,9 +245,9 @@ export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
           ) : (
             <div className="space-y-4">
               {accountCredentials.map((connector) => (
-                <div key={connector} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={connector} className="flex items-center justify-between p-4 border rounded-md">
                   <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 bg-primary/10 rounded flex items-center justify-center">
+                    <div className="h-10 w-10 bg-primary/10 rounded-md flex items-center justify-center">
                       <span className="text-sm font-semibold text-primary">
                         {connector.slice(0, 2).toUpperCase()}
                       </span>

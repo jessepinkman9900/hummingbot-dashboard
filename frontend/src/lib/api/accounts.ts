@@ -1,6 +1,5 @@
 import { apiClient } from './client';
 import {
-  PortfolioStateResponse,
   PortfolioHistoryResponse,
   PortfolioDistributionResponse,
   AccountsDistributionResponse,
@@ -11,7 +10,7 @@ export const accountsApi = {
   // Get list of all accounts
   async listAccounts(): Promise<string[]> {
     try {
-      const response = await apiClient.get<string[]>('/accounts/');
+      const response = await apiClient.get<string[]>('accounts/');
       return response.data || [];
     } catch (error) {
       console.error('Failed to fetch accounts:', error);
@@ -23,7 +22,7 @@ export const accountsApi = {
   async getAccountCredentials(accountName: string): Promise<string[]> {
     try {
       const response = await apiClient.get<string[]>(
-        `/accounts/${accountName}/credentials`
+        `accounts/${accountName}/credentials`
       );
       return response.data || [];
     } catch (error) {
@@ -35,10 +34,7 @@ export const accountsApi = {
   // Add a new account
   async addAccount(accountName: string): Promise<{ message: string }> {
     const response = await apiClient.post<{ message: string }>(
-      '/accounts/add-account',
-      {
-        account_name: accountName,
-      }
+      `accounts/add-account?account_name=${encodeURIComponent(accountName)}`
     );
     return response.data;
   },
@@ -46,10 +42,7 @@ export const accountsApi = {
   // Delete an account
   async deleteAccount(accountName: string): Promise<{ message: string }> {
     const response = await apiClient.post<{ message: string }>(
-      '/accounts/delete-account',
-      {
-        account_name: accountName,
-      }
+      `accounts/delete-account?account_name=${encodeURIComponent(accountName)}`
     );
     return response.data;
   },
@@ -60,9 +53,16 @@ export const accountsApi = {
     connectorName: string,
     credentials: Record<string, string>
   ): Promise<{ message: string }> {
+    // Process credentials to handle newline characters properly
+    const processedCredentials: Record<string, string> = {};
+    for (const [key, value] of Object.entries(credentials)) {
+      // Replace escaped newlines with actual newlines
+      processedCredentials[key] = value.replace(/\\n/g, '\n');
+    }
+
     const response = await apiClient.post<{ message: string }>(
       `/accounts/add-credential/${accountName}/${connectorName}`,
-      credentials
+      processedCredentials
     );
     return response.data;
   },
@@ -86,30 +86,28 @@ export const portfolioApi = {
     accounts?: string[];
     connectors?: string[];
     tokens?: string[];
-  }): Promise<PortfolioStateResponse> {
+  }): Promise<any> {
     try {
-      const response = await apiClient.post<PortfolioStateResponse>(
+      // Transform parameters to match API expectations
+      const requestBody: any = {};
+      if (filterRequest?.accounts && filterRequest.accounts.length > 0) {
+        requestBody.account_names = filterRequest.accounts;
+      }
+      if (filterRequest?.connectors && filterRequest.connectors.length > 0) {
+        requestBody.connector_names = filterRequest.connectors;
+      }
+      if (filterRequest?.tokens && filterRequest.tokens.length > 0) {
+        requestBody.token_names = filterRequest.tokens;
+      }
+
+      const response = await apiClient.post<any>(
         '/portfolio/state',
-        filterRequest || {}
+        requestBody
       );
-      return (
-        response.data || {
-          accounts: {},
-          total_balance: 0,
-          total_pnl: 0,
-          total_pnl_percentage: 0,
-          timestamp: new Date().toISOString(),
-        }
-      );
+      return response.data || {};
     } catch (error) {
       console.error('Failed to fetch portfolio state:', error);
-      return {
-        accounts: {},
-        total_balance: 0,
-        total_pnl: 0,
-        total_pnl_percentage: 0,
-        timestamp: new Date().toISOString(),
-      };
+      return {};
     }
   },
 
@@ -118,24 +116,68 @@ export const portfolioApi = {
     accounts?: string[];
     connectors?: string[];
     tokens?: string[];
-    startDate?: Date;
-    endDate?: Date;
-    page?: number;
-    pageSize?: number;
+    startTime?: Date;
+    endTime?: Date;
+    limit?: number;
+    cursor?: string;
   }): Promise<PortfolioHistoryResponse> {
     try {
+      const requestBody: any = {
+        limit: filterRequest?.limit || 100,
+        start_time: filterRequest?.startTime
+          ? Math.floor(filterRequest.startTime.getTime() / 1000)
+          : 0,
+        end_time: filterRequest?.endTime
+          ? Math.floor(filterRequest.endTime.getTime() / 1000)
+          : 0,
+        cursor: filterRequest?.cursor || 'string',
+      };
+
+      if (filterRequest?.accounts && filterRequest.accounts.length > 0) {
+        requestBody.account_names = filterRequest.accounts;
+      }
+      if (filterRequest?.connectors && filterRequest.connectors.length > 0) {
+        requestBody.connector_names = filterRequest.connectors;
+      }
+
       const response = await apiClient.post<PortfolioHistoryResponse>(
         '/portfolio/history',
-        {
-          ...filterRequest,
-          startDate: filterRequest?.startDate?.toISOString(),
-          endDate: filterRequest?.endDate?.toISOString(),
+        requestBody
+      );
+      return (
+        response.data || {
+          data: [],
+          pagination: {
+            limit: 100,
+            has_more: false,
+            next_cursor: null,
+            current_cursor: 'string',
+            filters: {
+              account_names: [],
+              connector_names: [],
+              start_time: 0,
+              end_time: 0,
+            },
+          },
         }
       );
-      return response.data || { data: [] };
     } catch (error) {
       console.error('Failed to fetch portfolio history:', error);
-      return { data: [] };
+      return {
+        data: [],
+        pagination: {
+          limit: 100,
+          has_more: false,
+          next_cursor: null,
+          current_cursor: 'string',
+          filters: {
+            account_names: [],
+            connector_names: [],
+            start_time: 0,
+            end_time: 0,
+          },
+        },
+      };
     }
   },
 
@@ -146,23 +188,37 @@ export const portfolioApi = {
     tokens?: string[];
   }): Promise<PortfolioDistributionResponse> {
     try {
+      const requestBody: any = {};
+
+      if (filterRequest?.accounts && filterRequest.accounts.length > 0) {
+        requestBody.account_names = filterRequest.accounts;
+      }
+      if (filterRequest?.connectors && filterRequest.connectors.length > 0) {
+        requestBody.connector_names = filterRequest.connectors;
+      }
+      if (filterRequest?.tokens && filterRequest.tokens.length > 0) {
+        requestBody.token_names = filterRequest.tokens;
+      }
+
       const response = await apiClient.post<PortfolioDistributionResponse>(
         '/portfolio/distribution',
-        filterRequest || {}
+        requestBody
       );
       return (
         response.data || {
-          tokens: {},
-          total_value: 0,
-          timestamp: new Date().toISOString(),
+          total_portfolio_value: 0,
+          token_count: 0,
+          distribution: [],
+          account_filter: undefined,
         }
       );
     } catch (error) {
       console.error('Failed to fetch portfolio distribution:', error);
       return {
-        tokens: {},
-        total_value: 0,
-        timestamp: new Date().toISOString(),
+        total_portfolio_value: 0,
+        token_count: 0,
+        distribution: [],
+        account_filter: undefined,
       };
     }
   },
@@ -174,15 +230,27 @@ export const portfolioApi = {
     tokens?: string[];
   }): Promise<AccountsDistributionResponse> {
     try {
+      const requestBody: any = {};
+
+      if (filterRequest?.accounts && filterRequest.accounts.length > 0) {
+        requestBody.account_names = filterRequest.accounts;
+      }
+      if (filterRequest?.connectors && filterRequest.connectors.length > 0) {
+        requestBody.connector_names = filterRequest.connectors;
+      }
+      if (filterRequest?.tokens && filterRequest.tokens.length > 0) {
+        requestBody.token_names = filterRequest.tokens;
+      }
+
       const response = await apiClient.post<AccountsDistributionResponse>(
         '/portfolio/accounts-distribution',
-        filterRequest || {}
+        requestBody
       );
       return (
         response.data || {
           accounts: {},
           total_value: 0,
-          timestamp: new Date().toISOString(),
+          account_count: 0,
         }
       );
     } catch (error) {
@@ -190,7 +258,7 @@ export const portfolioApi = {
       return {
         accounts: {},
         total_value: 0,
-        timestamp: new Date().toISOString(),
+        account_count: 0,
       };
     }
   },

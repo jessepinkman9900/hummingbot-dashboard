@@ -12,6 +12,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building2 } from 'lucide-react';
 import { marketDataApi } from '@/lib/api/market-data';
 
 export interface MarketDataFormData {
@@ -36,17 +37,6 @@ const INTERVALS = [
   { value: '1d', label: '1 day' },
 ];
 
-const COMMON_PAIRS = [
-  'BTC-USDT',
-  'ETH-USDT',
-  'BNB-USDT',
-  'ADA-USDT',
-  'SOL-USDT',
-  'DOGE-USDT',
-  'MATIC-USDT',
-  'DOT-USDT',
-];
-
 export function MarketDataForm({ onSubmit, loading = false }: MarketDataFormProps) {
   const [formData, setFormData] = useState<MarketDataFormData>({
     connector: '',
@@ -57,16 +47,23 @@ export function MarketDataForm({ onSubmit, loading = false }: MarketDataFormProp
   
   const [availableConnectors, setAvailableConnectors] = useState<string[]>([]);
   const [loadingConnectors, setLoadingConnectors] = useState(true);
+  const [connectorsError, setConnectorsError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadConnectors = async () => {
       try {
         setLoadingConnectors(true);
-        const response = await marketDataApi.getAvailableConnectors();
-        setAvailableConnectors(response.data);
+        setConnectorsError(null);
+        const response = await marketDataApi.getAvailableMarketDataConnectors();
+        if (response.data && Array.isArray(response.data)) {
+          setAvailableConnectors(response.data);
+        } else {
+          throw new Error('Invalid response format');
+        }
       } catch (error) {
         console.error('Failed to load connectors:', error);
+        setConnectorsError('Failed to load available exchanges');
         // Fallback to common connectors
         setAvailableConnectors(['binance', 'coinbase_pro', 'kraken', 'kucoin']);
       } finally {
@@ -126,46 +123,46 @@ export function MarketDataForm({ onSubmit, loading = false }: MarketDataFormProp
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Connector Selection */}
           <div className="space-y-2">
-            <Label htmlFor="connector">Exchange Connector</Label>
+            <Label htmlFor="connector" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Exchange Connector
+            </Label>
             <Select
               value={formData.connector}
               onValueChange={(value) => handleInputChange('connector', value)}
               disabled={loadingConnectors}
             >
               <SelectTrigger>
-                <SelectValue placeholder={loadingConnectors ? "Loading..." : "Select connector"} />
+                <SelectValue placeholder={loadingConnectors ? "Loading connectors..." : "Select exchange"} />
               </SelectTrigger>
               <SelectContent>
-                {availableConnectors.map((connector) => (
-                  <SelectItem key={connector} value={connector}>
-                    {connector}
+                {availableConnectors.length === 0 && !loadingConnectors ? (
+                  <SelectItem value="" disabled>
+                    No connectors available
                   </SelectItem>
-                ))}
+                ) : (
+                  availableConnectors.map((connector) => (
+                    <SelectItem key={connector} value={connector}>
+                      {connector}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             {errors.connector && (
               <p className="text-sm text-red-600">{errors.connector}</p>
+            )}
+            {loadingConnectors && (
+              <p className="text-sm text-muted-foreground">Loading available exchanges...</p>
+            )}
+            {connectorsError && (
+              <p className="text-sm text-amber-600">{connectorsError} - using fallback exchanges</p>
             )}
           </div>
 
           {/* Trading Pair */}
           <div className="space-y-2">
             <Label htmlFor="tradingPair">Trading Pair</Label>
-            <Select
-              value={formData.tradingPair}
-              onValueChange={(value) => handleInputChange('tradingPair', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select or type trading pair" />
-              </SelectTrigger>
-              <SelectContent>
-                {COMMON_PAIRS.map((pair) => (
-                  <SelectItem key={pair} value={pair}>
-                    {pair}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Input
               id="tradingPair"
               type="text"

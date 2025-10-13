@@ -315,46 +315,74 @@ export interface TokenBalance {
 }
 
 export interface PortfolioHistoryResponse {
-  data: PortfolioSnapshot[];
-  pagination?: {
-    page: number;
+  data: PortfolioHistoryDataPoint[];
+  pagination: {
     limit: number;
-    total: number;
-    totalPages: number;
+    has_more: boolean;
+    next_cursor: string | null;
+    current_cursor: string;
+    filters: {
+      account_names: string[];
+      connector_names: string[];
+      start_time: number;
+      end_time: number;
+    };
   };
 }
 
-export interface PortfolioDistributionResponse {
-  tokens: Record<string, TokenDistribution>;
-  total_value: number;
+export interface PortfolioHistoryDataPoint {
   timestamp: string;
+  state: Record<string, Record<string, PortfolioToken[]>>;
 }
 
-export interface TokenDistribution {
+export interface PortfolioToken {
+  token: string;
+  units: number;
+  price: number;
   value: number;
-  percentage: number;
-  accounts: Record<string, AccountTokenBreakdown>;
+  available_units: number;
 }
 
-export interface AccountTokenBreakdown {
-  value: number;
+export interface PortfolioDistributionResponse {
+  total_portfolio_value: number;
+  token_count: number;
+  distribution: TokenDistributionItem[];
+  account_filter?: string;
+}
+
+export interface TokenDistributionItem {
+  token: string;
+  total_value: number;
+  total_units: number;
   percentage: number;
-  connectors: Record<string, number>;
+  accounts: Record<string, TokenAccountBreakdown>;
+}
+
+export interface TokenAccountBreakdown {
+  value: number;
+  units: number;
+  percentage: number;
+  connectors: Record<string, TokenConnectorBreakdown>;
+}
+
+export interface TokenConnectorBreakdown {
+  value: number;
+  units: number;
 }
 
 export interface AccountsDistributionResponse {
-  accounts: Record<string, AccountDistribution>;
+  accounts: Record<string, AccountDistributionItem>;
   total_value: number;
-  timestamp: string;
+  account_count: number;
 }
 
-export interface AccountDistribution {
+export interface AccountDistributionItem {
   value: number;
   percentage: number;
-  connectors: Record<string, ConnectorDistribution>;
+  connectors: Record<string, AccountConnectorBreakdown>;
 }
 
-export interface ConnectorDistribution {
+export interface AccountConnectorBreakdown {
   value: number;
   percentage: number;
 }

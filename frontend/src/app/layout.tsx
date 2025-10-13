@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Merriweather, JetBrains_Mono } from "next/font/google";
+import { Oxanium, Source_Code_Pro } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/lib/providers/query-provider";
+import { ThemeProvider } from "@/lib/themes/provider";
 import { Toaster } from "@/components/ui/sonner";
 
-const merriweather = Merriweather({
-  weight: ['300', '400', '700'],
+const oxanium = Oxanium({
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
   subsets: ["latin"],
-  variable: "--font-merriweather",
+  variable: "--font-oxanium",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const sourceCodePro = Source_Code_Pro({
+  weight: ['200', '300', '400', '500', '600', '700', '800', '900'],
   subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
+  variable: "--font-source-code-pro",
 });
 
 export const metadata: Metadata = {
@@ -29,12 +31,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${merriweather.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${oxanium.variable} ${sourceCodePro.variable} font-sans antialiased`}
       >
-        <QueryProvider>
-          {children}
-        </QueryProvider>
-        <Toaster />
+        <ThemeProvider>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

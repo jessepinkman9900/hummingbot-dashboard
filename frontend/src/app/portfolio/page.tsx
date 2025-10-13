@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+
+// This is the main dashboard page showing portfolio overview
 import { MainLayout } from '@/components/layout/main-layout';
 import { PortfolioOverview } from '@/components/portfolio/portfolio-overview';
-import { PortfolioDetails } from '@/components/portfolio/portfolio-details';
 import { AccountSettings } from '@/components/portfolio/account-settings';
 import { AddAccountDialog } from '@/components/portfolio/add-account-dialog';
+import { PortfolioHistoryChart } from '@/components/portfolio/portfolio-history-chart';
+import { PortfolioDistribution } from '@/components/portfolio/portfolio-distribution';
 import { AuthRequiredAlert } from '@/components/auth/auth-required-alert';
 import { useAccountsUIStore } from '@/lib/store/accounts-ui-store';
 import { useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +25,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-type View = 'overview' | 'details' | 'settings';
+type View = 'overview' | 'settings';
 
-export default function PortfolioPage() {
+export default function DashboardPage() {
   const { selectedAccount, setSelectedAccount } = useAccountsUIStore();
   const deleteAccountMutation = useDeleteAccount();
   
@@ -31,10 +35,11 @@ export default function PortfolioPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
-  const [showHealthStatus, setShowHealthStatus] = useState(false);
+
+  const [timeRange, setTimeRange] = useState<'1d' | '7d' | '30d' | '90d' | '1y'>('7d');
 
   const handleConfigureAuth = () => {
-    setShowHealthStatus(true);
+    // Navigate to auth configuration if needed
   };
 
   const handleAddAccount = () => {
@@ -74,45 +79,15 @@ export default function PortfolioPage() {
     setCurrentView('settings');
   };
 
-  const handleViewDetails = (accountName: string) => {
-    setSelectedAccount(accountName);
-    setCurrentView('details');
-  };
+
 
   const handleBackToOverview = () => {
     setCurrentView('overview');
     setSelectedAccount(null);
   };
 
-  const handleViewSettingsFromDetails = () => {
-    setCurrentView('settings');
-  };
-
   const renderCurrentView = () => {
     switch (currentView) {
-      case 'overview':
-        return (
-          <PortfolioOverview
-            onAddAccount={handleAddAccount}
-            onDeleteAccount={handleDeleteAccount}
-            onViewSettings={handleViewSettings}
-            onViewDetails={handleViewDetails}
-          />
-        );
-        
-      case 'details':
-        if (!selectedAccount) {
-          setCurrentView('overview');
-          return null;
-        }
-        return (
-          <PortfolioDetails
-            accountName={selectedAccount}
-            onBack={handleBackToOverview}
-            onViewSettings={handleViewSettingsFromDetails}
-          />
-        );
-        
       case 'settings':
         if (!selectedAccount) {
           setCurrentView('overview');
@@ -134,7 +109,50 @@ export default function PortfolioPage() {
     <MainLayout>
       <div className="container mx-auto py-6">
         <AuthRequiredAlert onConfigureClick={handleConfigureAuth} />
-        {renderCurrentView()}
+        
+        {currentView === 'overview' ? (
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Dashboard</TabsTrigger>
+              <TabsTrigger value="history">Performance</TabsTrigger>
+              <TabsTrigger value="distribution">Assets</TabsTrigger>
+              <TabsTrigger value="accounts">Accounts</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="space-y-4">
+              <PortfolioOverview
+                onAddAccount={handleAddAccount}
+                onDeleteAccount={handleDeleteAccount}
+                onViewSettings={handleViewSettings}
+              />
+            </TabsContent>
+            
+            <TabsContent value="history" className="space-y-4">
+              <div className="grid gap-4">
+                <PortfolioHistoryChart 
+                  timeRange={timeRange} 
+                  onTimeRangeChange={setTimeRange}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="distribution" className="space-y-4">
+              <div className="grid gap-4">
+                <PortfolioDistribution />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="accounts" className="space-y-4">
+              <PortfolioOverview
+                onAddAccount={handleAddAccount}
+                onDeleteAccount={handleDeleteAccount}
+                onViewSettings={handleViewSettings}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          renderCurrentView()
+        )}
         
         <AddAccountDialog 
           open={showAddDialog} 

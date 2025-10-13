@@ -450,7 +450,7 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
 
             {/* Current URL Info */}
             {selectedUrl && (
-              <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+              <div className="space-y-3 p-4 border rounded-md bg-muted/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">{selectedUrl.name}</h4>
@@ -500,7 +500,7 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
 
             {/* Add URL Form */}
             {isAddingUrl && (
-              <div className="space-y-3 p-4 border rounded-lg">
+              <div className="space-y-3 p-4 border rounded-md">
                 <h4 className="font-medium">Add New URL</h4>
                 <div className="space-y-2">
                   <Label htmlFor="url-name">Name</Label>
@@ -560,7 +560,7 @@ export function HealthStatusButton({ className }: HealthStatusButtonProps) {
                 <h4 className="font-medium">All URLs</h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {urls.map((url) => (
-                    <div key={url.id} className="p-3 border rounded-lg">
+                    <div key={url.id} className="p-3 border rounded-md">
                       {editingUrlId === url.id ? (
                         // Edit form
                         <div className="space-y-3">

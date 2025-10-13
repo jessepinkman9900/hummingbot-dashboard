@@ -30,7 +30,7 @@ export function PortfolioDetails({ accountName, onBack, onViewSettings }: Portfo
     fetchPortfolioData([accountName]);
   }, [accountName, fetchPortfolioData]);
 
-  const accountData = portfolioState?.accounts[accountName];
+  const accountData = portfolioState?.accounts?.[accountName];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -223,7 +223,7 @@ export function PortfolioDetails({ accountName, onBack, onViewSettings }: Portfo
                     </h4>
                     <div className="grid gap-3">
                       {Object.entries(connector.balances).map(([tokenName, balance]) => (
-                        <div key={`${connectorName}-${tokenName}`} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div key={`${connectorName}-${tokenName}`} className="flex items-center justify-between p-3 border rounded-md">
                           <div className="flex items-center space-x-3">
                             <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
                               <span className="text-xs font-semibold text-primary">

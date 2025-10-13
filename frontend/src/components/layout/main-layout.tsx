@@ -5,6 +5,8 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { HealthStatusButton } from '@/components/system/health-status-button';
+import { ThemePicker } from '@/components/ui/theme-picker';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAppStore } from '@/lib/store';
 
 interface MainLayoutProps {
@@ -30,9 +32,11 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
             
             {/* Header actions */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <ThemePicker />
               <HealthStatusButton />
-              {/* Theme toggle, notifications, user menu, etc. */}
+              {/* Notifications, user menu, etc. */}
             </div>
           </header>
 

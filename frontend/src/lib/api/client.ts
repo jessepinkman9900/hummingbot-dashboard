@@ -281,7 +281,10 @@ export class ApiClient {
       retryAttempts = API_CONFIG.retryAttempts,
     } = config;
 
-    const url = `${this.getBaseURL()}${endpoint}`;
+    // Properly join base URL and endpoint, avoiding double slashes
+    const baseUrl = this.getBaseURL().replace(/\/$/, ''); // Remove trailing slash
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`; // Ensure leading slash
+    const url = `${baseUrl}${cleanEndpoint}`;
 
     // Prepare headers
     const requestHeaders: Record<string, string> = {

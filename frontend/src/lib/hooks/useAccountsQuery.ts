@@ -152,17 +152,72 @@ export function usePortfolioState(accounts?: string[]) {
     queryKey: portfolioQueryKeys.state(accounts),
     queryFn: async () => {
       const result = await portfolioApi.getPortfolioState(
-        accounts ? { accounts } : undefined
+        accounts && accounts.length > 0 ? { accounts } : undefined
       );
-      return (
-        result ?? {
+
+      if (!result) {
+        return {
           accounts: {},
           total_balance: 0,
           total_pnl: 0,
           total_pnl_percentage: 0,
           timestamp: new Date().toISOString(),
+        };
+      }
+
+      // Transform the API response format: { account_name: { connector_name: [token_data] } }
+      // into the expected format with totals
+      let totalBalance = 0;
+      const transformedAccounts: Record<string, any> = {};
+
+      Object.entries(result).forEach(
+        ([accountName, connectors]: [string, any]) => {
+          let accountBalance = 0;
+          const accountConnectors: Record<string, any> = {};
+
+          Object.entries(connectors).forEach(
+            ([connectorName, tokens]: [string, any]) => {
+              let connectorBalance = 0;
+              const connectorTokens: Record<string, any> = {};
+
+              if (Array.isArray(tokens)) {
+                tokens.forEach((token: any) => {
+                  const tokenValue = token.value || 0;
+                  connectorBalance += tokenValue;
+                  connectorTokens[token.token] = {
+                    units: token.units || 0,
+                    price: token.price || 0,
+                    value: tokenValue,
+                    available_units: token.available_units || 0,
+                  };
+                });
+              }
+
+              accountBalance += connectorBalance;
+              accountConnectors[connectorName] = {
+                total_balance: connectorBalance,
+                tokens: connectorTokens,
+              };
+            }
+          );
+
+          totalBalance += accountBalance;
+          transformedAccounts[accountName] = {
+            total_balance: accountBalance,
+            total_pnl: 0, // PnL calculation would need historical data
+            total_pnl_percentage: 0,
+            connectors: accountConnectors,
+          };
         }
       );
+
+      return {
+        accounts: transformedAccounts,
+        total_balance: totalBalance,
+        total_pnl: 0,
+        total_pnl_percentage: 0,
+        timestamp: new Date().toISOString(),
+      };
     },
     staleTime: 1000 * 30, // 30 seconds for portfolio data
     refetchInterval: 1000 * 60, // Refetch every minute
@@ -174,10 +229,61 @@ export function usePortfolioHistory(filters?: any) {
     queryKey: portfolioQueryKeys.history(filters),
     queryFn: async () => {
       const result = await portfolioApi.getPortfolioHistory(filters);
-      return result ?? { data: [] };
+
+      if (!result || !result.data) {
+        return {
+          data: [],
+          chartData: [],
+          pagination: {
+            limit: 100,
+            has_more: false,
+            next_cursor: null,
+            current_cursor: 'string',
+            filters: {
+              account_names: [],
+              connector_names: [],
+              start_time: 0,
+              end_time: 0,
+            },
+          },
+        };
+      }
+
+      // Transform the API response data into chart-friendly format
+      const chartData = result.data
+        .map((dataPoint: any) => {
+          let totalValue = 0;
+
+          // Calculate total value across all accounts and connectors
+          Object.values(dataPoint.state).forEach((accountData: any) => {
+            Object.values(accountData).forEach((connectorTokens: any) => {
+              if (Array.isArray(connectorTokens)) {
+                connectorTokens.forEach((token: any) => {
+                  totalValue += token.value || 0;
+                });
+              }
+            });
+          });
+
+          return {
+            timestamp: new Date(dataPoint.timestamp),
+            totalBalance: totalValue,
+            totalPnL: 0, // Would need baseline to calculate PnL
+            totalPnLPercentage: 0,
+          };
+        })
+        .sort(
+          (a: any, b: any) => a.timestamp.getTime() - b.timestamp.getTime()
+        );
+
+      return {
+        data: result.data,
+        chartData,
+        pagination: result.pagination,
+      };
     },
     staleTime: 1000 * 60 * 2, // 2 minutes for historical data
-    enabled: !!filters, // Only run if filters are provided
+    enabled: true, // Always enabled now, will use default accounts/connectors
   });
 }
 
@@ -190,9 +296,10 @@ export function usePortfolioDistribution(accounts?: string[]) {
       );
       return (
         result ?? {
-          tokens: {},
-          total_value: 0,
-          timestamp: new Date().toISOString(),
+          total_portfolio_value: 0,
+          token_count: 0,
+          distribution: [],
+          account_filter: undefined,
         }
       );
     },
@@ -201,22 +308,22 @@ export function usePortfolioDistribution(accounts?: string[]) {
   });
 }
 
-export function useAccountsDistribution(accounts?: string[]) {
-  return useQuery({
-    queryKey: portfolioQueryKeys.accountsDistribution(accounts),
-    queryFn: async () => {
-      const result = await portfolioApi.getAccountsDistribution(
-        accounts ? { accounts } : undefined
-      );
-      return (
-        result ?? {
-          accounts: {},
-          total_value: 0,
-          timestamp: new Date().toISOString(),
-        }
-      );
-    },
-    staleTime: 1000 * 60, // 1 minute
-    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
-  });
-}
+// export function useAccountsDistribution(accounts?: string[]) {
+//   return useQuery({
+//     queryKey: portfolioQueryKeys.accountsDistribution(accounts),
+//     queryFn: async () => {
+//       const result = await portfolioApi.getAccountsDistribution(
+//         accounts ? { accounts } : undefined
+//       );
+//       return (
+//         result ?? {
+//           accounts: {},
+//           total_value: 0,
+//           account_count: 0,
+//         }
+//       );
+//     },
+//     staleTime: 1000 * 60, // 1 minute
+//     refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
+//   });
+// }
