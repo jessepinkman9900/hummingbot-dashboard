@@ -128,25 +128,6 @@ export default function AccountDetailsPage() {
           </div>
         </div>
 
-        {/* API Endpoint Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Badge variant="secondary">GET</Badge>
-              /accounts/{accountName}/credentials API Endpoint
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              This page demonstrates the{' '}
-              <code className="px-2 py-1 bg-gray-100 rounded text-sm">
-                /accounts/{accountName}/credentials
-              </code>{' '}
-              endpoint that fetches all credentials for the selected account.
-            </p>
-          </CardContent>
-        </Card>
-
         {/* Credentials Summary */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>

@@ -4,6 +4,7 @@ import "./globals.css";
 import QueryProvider from "@/lib/providers/query-provider";
 import { ThemeProvider } from "@/lib/themes/provider";
 import { Toaster } from "@/components/ui/sonner";
+import { VibeKanbanCompanionClient } from "@/components/system/vibe-kanban-companion";
 
 const oxanium = Oxanium({
   weight: ['200', '300', '400', '500', '600', '700', '800'],
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${oxanium.variable} ${sourceCodePro.variable} font-sans antialiased`}
       >
+        <VibeKanbanCompanionClient />
         <ThemeProvider>
           <QueryProvider>
             {children}
