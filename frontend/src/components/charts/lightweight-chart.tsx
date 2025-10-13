@@ -7,7 +7,9 @@ import {
   UTCTimestamp,
   ISeriesApi,
   CandlestickData,
-  LineData
+  LineData,
+  CandlestickSeries,
+  LineSeries
 } from 'lightweight-charts';
 import { CandleData } from '@/lib/api/market-data';
 import { Button } from '@/components/ui/button';
@@ -61,7 +63,7 @@ export function LightweightChart({
     }
 
     if (chartType === 'candlestick') {
-      seriesRef.current = chartRef.current.addSeries('Candlestick', {
+      seriesRef.current = chartRef.current.addSeries(CandlestickSeries, {
         upColor: '#26a69a',
         downColor: '#ef5350',
         borderVisible: false,
@@ -69,7 +71,7 @@ export function LightweightChart({
         wickDownColor: '#ef5350',
       });
     } else {
-      seriesRef.current = chartRef.current.addSeries('Line', {
+      seriesRef.current = chartRef.current.addSeries(LineSeries, {
         color: '#2563eb',
         lineWidth: 2,
         priceLineVisible: false,
