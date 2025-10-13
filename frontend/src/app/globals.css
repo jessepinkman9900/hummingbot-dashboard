@@ -135,3 +135,70 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Monaco Editor Git Diff Styling */
+.git-diff-modified-line {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  border-left: 3px solid #ffc107 !important;
+}
+
+.git-diff-added-line {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  border-left: 3px solid #28a745 !important;
+}
+
+.git-diff-deleted-line {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border-left: 3px solid #dc3545 !important;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.git-diff-modified-gutter {
+  background-color: #ffc107 !important;
+  width: 3px !important;
+}
+
+.git-diff-added-gutter {
+  background-color: #28a745 !important;
+  width: 3px !important;
+}
+
+.git-diff-deleted-gutter {
+  background-color: #dc3545 !important;
+  width: 3px !important;
+}
+
+.git-diff-modified-glyph::before {
+  content: "●";
+  color: #ffc107;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.git-diff-added-glyph::before {
+  content: "+";
+  color: #28a745;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.git-diff-deleted-glyph::before {
+  content: "−";
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* Dark theme adjustments */
+.dark .git-diff-modified-line {
+  background-color: rgba(255, 193, 7, 0.15) !important;
+}
+
+.dark .git-diff-added-line {
+  background-color: rgba(40, 167, 69, 0.15) !important;
+}
+
+.dark .git-diff-deleted-line {
+  background-color: rgba(220, 53, 69, 0.15) !important;
+}
