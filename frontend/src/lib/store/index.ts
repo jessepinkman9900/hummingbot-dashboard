@@ -1,12 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import {
-  Portfolio,
-  BotInstance,
-  MarketData,
-  SystemStatus,
-  User,
-} from '@/lib/types';
+import { Portfolio, BotInstance, SystemStatus, User } from '@/lib/types';
 
 // Portfolio Store
 interface PortfolioState {
@@ -82,42 +76,8 @@ export const useBotsStore = create<BotsState & BotsActions>()(
   }))
 );
 
-// Market Data Store
-interface MarketState {
-  marketData: Record<string, MarketData>;
-  loading: boolean;
-  error: string | null;
-  selectedSymbol: string;
-}
-
-interface MarketActions {
-  setMarketData: (symbol: string, data: MarketData) => void;
-  setSelectedSymbol: (symbol: string) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  clearMarketData: () => void;
-}
-
-export const useMarketStore = create<MarketState & MarketActions>()(
-  subscribeWithSelector((set) => ({
-    // State
-    marketData: {},
-    loading: false,
-    error: null,
-    selectedSymbol: 'BTCUSDT',
-
-    // Actions
-    setMarketData: (symbol, data) =>
-      set((state) => ({
-        marketData: { ...state.marketData, [symbol]: data },
-        error: null,
-      })),
-    setSelectedSymbol: (selectedSymbol) => set({ selectedSymbol }),
-    setLoading: (loading) => set({ loading }),
-    setError: (error) => set({ error, loading: false }),
-    clearMarketData: () => set({ marketData: {} }),
-  }))
-);
+// Market data is now handled by React Query hooks in useMarketDataQuery.ts
+// Removed useMarketStore - use useCandles, useAvailableMarketDataConnectors instead
 
 // User Preferences Store
 interface UserState {

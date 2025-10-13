@@ -14,11 +14,10 @@ import {
   BarChart3,
   Bot,
   Wallet,
-  Settings,
   TrendingUp,
-  Activity,
   Users,
   TestTube,
+  Plug,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -58,14 +57,9 @@ const navigationItems = [
         icon: Users,
       },
       {
-        title: 'System',
-        url: '/system',
-        icon: Activity,
-      },
-      {
-        title: 'Settings',
-        url: '/settings',
-        icon: Settings,
+        title: 'Connectors',
+        url: '/connectors',
+        icon: Plug,
       },
     ],
   },

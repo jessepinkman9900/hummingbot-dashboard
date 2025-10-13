@@ -3,7 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2025-10-12
 
 ## Active Technologies
-- TypeScript with pnpm, Node.js 24.x LTS + React 18+, Next.js 15, shadcn/ui, Tailwind CSS, Recharts, Chart.js, Zustand, React Query (001-frontend-dashboard-for)
+- TypeScript with pnpm, Node.js 24.x LTS + React 18+, Next.js 15, shadcn/ui, Tailwind CSS, Recharts, Chart.js, Zustand, React Query
+- use tanstack react query for all API calls from the frontend
 
 ## Project Structure
 ```

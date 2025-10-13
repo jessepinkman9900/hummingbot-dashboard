@@ -1,6 +1,4 @@
 'use client';
-
-import { useEffect } from 'react';
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAccountsStore } from '@/lib/store/accounts-store';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usePortfolioState } from '@/lib/hooks/useAccountsQuery';
 
 interface PortfolioDetailsProps {
   accountName: string;
@@ -18,17 +16,11 @@ interface PortfolioDetailsProps {
 }
 
 export function PortfolioDetails({ accountName, onBack, onViewSettings }: PortfolioDetailsProps) {
-  const {
-    portfolioState,
-    loadingPortfolio,
-    portfolioError,
-    fetchPortfolioData
-  } = useAccountsStore();
-
-  useEffect(() => {
-    // Fetch portfolio data for this specific account
-    fetchPortfolioData([accountName]);
-  }, [accountName, fetchPortfolioData]);
+  const { 
+    data: portfolioState, 
+    isLoading: loadingPortfolio, 
+    error: portfolioError 
+  } = usePortfolioState([accountName]);
 
   const accountData = portfolioState?.accounts?.[accountName];
 
@@ -61,7 +53,7 @@ export function PortfolioDetails({ accountName, onBack, onViewSettings }: Portfo
     return (
       <Alert>
         <AlertDescription>
-          {portfolioError}
+          {portfolioError.message || 'Failed to load portfolio data'}
         </AlertDescription>
       </Alert>
     );

@@ -308,22 +308,22 @@ export function usePortfolioDistribution(accounts?: string[]) {
   });
 }
 
-// export function useAccountsDistribution(accounts?: string[]) {
-//   return useQuery({
-//     queryKey: portfolioQueryKeys.accountsDistribution(accounts),
-//     queryFn: async () => {
-//       const result = await portfolioApi.getAccountsDistribution(
-//         accounts ? { accounts } : undefined
-//       );
-//       return (
-//         result ?? {
-//           accounts: {},
-//           total_value: 0,
-//           account_count: 0,
-//         }
-//       );
-//     },
-//     staleTime: 1000 * 60, // 1 minute
-//     refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
-//   });
-// }
+export function useAccountsDistribution(accounts?: string[]) {
+  return useQuery({
+    queryKey: portfolioQueryKeys.accountsDistribution(accounts),
+    queryFn: async () => {
+      const result = await portfolioApi.getAccountsDistribution(
+        accounts ? { accounts } : undefined
+      );
+      return (
+        result ?? {
+          accounts: {},
+          total_value: 0,
+          account_count: 0,
+        }
+      );
+    },
+    staleTime: 1000 * 60, // 1 minute
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
+  });
+}

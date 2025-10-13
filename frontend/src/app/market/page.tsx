@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, AlertCircle, TrendingUp } from 'lucide-react';
 import { LightweightChart } from '@/components/charts/lightweight-chart';
 import { MarketDataForm, MarketDataFormData } from '@/components/forms/market-data-form';
-import { marketDataApi, CandleData } from '@/lib/api/market-data';
+import { CandleData } from '@/lib/api/market-data';
+import { useFetchCandles } from '@/lib/hooks/useMarketDataQuery';
 
 // Create a simple Alert component since it doesn't exist
 function Alert({ variant, children }: { variant?: 'destructive'; children: React.ReactNode }) {
@@ -23,16 +24,16 @@ function AlertDescription({ children }: { children: React.ReactNode }) {
 
 export default function MarketDataPage() {
   const [chartData, setChartData] = useState<CandleData[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentConfig, setCurrentConfig] = useState<MarketDataFormData | null>(null);
+  
+  const fetchCandlesMutation = useFetchCandles();
 
   const handleFormSubmit = async (formData: MarketDataFormData) => {
-    setLoading(true);
     setError(null);
     
     try {
-      const response = await marketDataApi.getCandles({
+      const response = await fetchCandlesMutation.mutateAsync({
         connector: formData.connector,
         trading_pair: formData.tradingPair,
         interval: formData.interval,
@@ -49,8 +50,6 @@ export default function MarketDataPage() {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch chart data';
       setError(errorMessage);
       console.error('Market data fetch error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -71,7 +70,7 @@ export default function MarketDataPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Configuration Form */}
         <div className="lg:col-span-1">
-          <MarketDataForm onSubmit={handleFormSubmit} loading={loading} />
+          <MarketDataForm onSubmit={handleFormSubmit} loading={fetchCandlesMutation.isPending} />
           
           {/* Current Configuration Display */}
           {currentConfig && (
@@ -102,7 +101,7 @@ export default function MarketDataPage() {
             </CardHeader>
             <CardContent>
               {/* Loading State */}
-              {loading && (
+              {fetchCandlesMutation.isPending && (
                 <div className="flex items-center justify-center h-96">
                   <div className="flex items-center space-x-2">
                     <Loader2 className="h-6 w-6 animate-spin" />
@@ -112,7 +111,7 @@ export default function MarketDataPage() {
               )}
 
               {/* Error State */}
-              {error && !loading && (
+              {error && !fetchCandlesMutation.isPending && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
@@ -122,7 +121,7 @@ export default function MarketDataPage() {
               )}
 
               {/* Chart Display */}
-              {!loading && !error && chartData.length > 0 && (
+              {!fetchCandlesMutation.isPending && !error && chartData.length > 0 && (
                 <div className="space-y-4">
                   <LightweightChart 
                     data={chartData} 
@@ -159,7 +158,7 @@ export default function MarketDataPage() {
               )}
 
               {/* Empty State */}
-              {!loading && !error && chartData.length === 0 && (
+              {!fetchCandlesMutation.isPending && !error && chartData.length === 0 && (
                 <div className="flex items-center justify-center h-96 text-muted-foreground">
                   <div className="text-center">
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />

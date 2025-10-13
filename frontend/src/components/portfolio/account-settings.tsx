@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAccountsStore } from '@/lib/store/accounts-store';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
+import { useAccountCredentials, useAddCredential, useDeleteCredential } from '@/lib/hooks/useAccountsQuery';
+import { useAvailableConnectors } from '@/lib/hooks/useConnectorsQuery';
 
 interface AccountSettingsProps {
   accountName: string;
@@ -20,14 +21,10 @@ interface AccountSettingsProps {
 }
 
 export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
-  const {
-    accountCredentials,
-    loadingCredentials,
-    credentialsError,
-    availableConnectors,
-    addCredential,
-    deleteCredential
-  } = useAccountsStore();
+  const { data: accountCredentials = [], isLoading: loadingCredentials, error: credentialsError } = useAccountCredentials(accountName);
+  const { data: availableConnectors = [] } = useAvailableConnectors();
+  const addCredentialMutation = useAddCredential();
+  const deleteCredentialMutation = useDeleteCredential();
 
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedConnector, setSelectedConnector] = useState<string>('');
@@ -48,13 +45,16 @@ export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
 
     setIsSubmitting(true);
     try {
-      await addCredential(accountName, selectedConnector, credentialFields);
+      await addCredentialMutation.mutateAsync({
+        accountName,
+        connectorName: selectedConnector,
+        credentials: credentialFields
+      });
       setShowAddDialog(false);
       setSelectedConnector('');
       setCredentialFields({});
-      toast.success('Credential added successfully');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to add credential');
+      // Error handling is done by the mutation's onError callback
     } finally {
       setIsSubmitting(false);
     }
@@ -62,10 +62,12 @@ export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
 
   const handleDeleteCredential = async (connectorName: string) => {
     try {
-      await deleteCredential(accountName, connectorName);
-      toast.success('Credential deleted successfully');
+      await deleteCredentialMutation.mutateAsync({
+        accountName,
+        connectorName
+      });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete credential');
+      // Error handling is done by the mutation's onError callback
     }
   };
 
@@ -108,7 +110,7 @@ export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
     return (
       <Alert>
         <AlertDescription>
-          {credentialsError}
+          {credentialsError.message || 'Failed to load credentials'}
         </AlertDescription>
       </Alert>
     );

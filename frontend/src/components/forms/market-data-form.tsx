@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
-import { marketDataApi } from '@/lib/api/market-data';
+import { useAvailableMarketDataConnectors } from '@/lib/hooks/useMarketDataQuery';
 
 export interface MarketDataFormData {
   connector: string;
@@ -45,34 +45,13 @@ export function MarketDataForm({ onSubmit, loading = false }: MarketDataFormProp
     maxRecords: 100,
   });
   
-  const [availableConnectors, setAvailableConnectors] = useState<string[]>([]);
-  const [loadingConnectors, setLoadingConnectors] = useState(true);
-  const [connectorsError, setConnectorsError] = useState<string | null>(null);
+  const { 
+    data: availableConnectors = [], 
+    isLoading: loadingConnectors, 
+    error: connectorsError 
+  } = useAvailableMarketDataConnectors();
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const loadConnectors = async () => {
-      try {
-        setLoadingConnectors(true);
-        setConnectorsError(null);
-        const response = await marketDataApi.getAvailableMarketDataConnectors();
-        if (response.data && Array.isArray(response.data)) {
-          setAvailableConnectors(response.data);
-        } else {
-          throw new Error('Invalid response format');
-        }
-      } catch (error) {
-        console.error('Failed to load connectors:', error);
-        setConnectorsError('Failed to load available exchanges');
-        // Fallback to common connectors
-        setAvailableConnectors(['binance', 'coinbase_pro', 'kraken', 'kucoin']);
-      } finally {
-        setLoadingConnectors(false);
-      }
-    };
-
-    loadConnectors();
-  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -156,7 +135,9 @@ export function MarketDataForm({ onSubmit, loading = false }: MarketDataFormProp
               <p className="text-sm text-muted-foreground">Loading available exchanges...</p>
             )}
             {connectorsError && (
-              <p className="text-sm text-amber-600">{connectorsError} - using fallback exchanges</p>
+              <p className="text-sm text-amber-600">
+                {connectorsError.message || 'Failed to load exchanges'} - using fallback exchanges
+              </p>
             )}
           </div>
 
