@@ -3,12 +3,24 @@ import { ApiResponse } from '@/lib/types';
 
 // Market Data Types for Lightweight Charts
 export interface CandleData {
-  time: number; // Unix timestamp
+  timestamp: number; // Unix timestamp
   open: number;
   high: number;
   low: number;
   close: number;
-  volume?: number;
+  volume: number;
+  quote_asset_volume?: number;
+  n_trades?: number;
+  taker_buy_base_volume?: number;
+  taker_buy_quote_volume?: number;
+}
+
+export interface HistoricalCandlesRequest {
+  connector_name: string;
+  trading_pair: string;
+  interval: string;
+  start_time: number; // Unix timestamp
+  end_time: number; // Unix timestamp
 }
 
 export interface CandlesRequest {
@@ -29,6 +41,9 @@ export interface MarketDataApiClient {
   getCandles: (
     request: CandlesRequest
   ) => Promise<ApiResponse<CandlesResponse>>;
+  getHistoricalCandles: (
+    request: HistoricalCandlesRequest
+  ) => Promise<ApiResponse<CandleData[]>>;
   getAvailableMarketDataConnectors: () => Promise<ApiResponse<string[]>>;
 }
 
@@ -41,6 +56,18 @@ export const marketDataApi: MarketDataApiClient = {
       trading_pair: request.trading_pair,
       interval: request.interval,
       max_records: request.max_records,
+    });
+  },
+
+  async getHistoricalCandles(
+    request: HistoricalCandlesRequest
+  ): Promise<ApiResponse<CandleData[]>> {
+    return apiClient.post<CandleData[]>('/market-data/historical-candles', {
+      connector_name: request.connector_name,
+      trading_pair: request.trading_pair,
+      interval: request.interval,
+      start_time: request.start_time,
+      end_time: request.end_time,
     });
   },
 
