@@ -22,7 +22,7 @@ export default function ConnectorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 20;
 
   // Fetch connectors
   useEffect(() => {
@@ -48,24 +48,29 @@ export default function ConnectorsPage() {
     fetchConnectors();
   }, []);
 
-  // Filter connectors based on search term (fuzzy search)
+  // Filter connectors based on search term (fuzzy search) and sort alphabetically
   const filteredConnectors = useMemo(() => {
-    if (!searchTerm) return connectors;
-
-    const searchLower = searchTerm.toLowerCase();
-    return connectors.filter((connector) => {
-      const connectorLower = connector.toLowerCase();
-      
-      // Simple fuzzy search: check if all characters of search term exist in order
-      let searchIndex = 0;
-      for (let i = 0; i < connectorLower.length && searchIndex < searchLower.length; i++) {
-        if (connectorLower[i] === searchLower[searchIndex]) {
-          searchIndex++;
+    let filtered = connectors;
+    
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = connectors.filter((connector) => {
+        const connectorLower = connector.toLowerCase();
+        
+        // Simple fuzzy search: check if all characters of search term exist in order
+        let searchIndex = 0;
+        for (let i = 0; i < connectorLower.length && searchIndex < searchLower.length; i++) {
+          if (connectorLower[i] === searchLower[searchIndex]) {
+            searchIndex++;
+          }
         }
-      }
-      
-      return searchIndex === searchLower.length || connectorLower.includes(searchLower);
-    });
+        
+        return searchIndex === searchLower.length || connectorLower.includes(searchLower);
+      });
+    }
+    
+    // Sort alphabetically
+    return filtered.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   }, [connectors, searchTerm]);
 
   // Pagination
@@ -103,8 +108,8 @@ export default function ConnectorsPage() {
             </CardHeader>
             <CardContent>
               <Skeleton className="h-10 w-full mb-6" />
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
                   <Skeleton key={i} className="h-20" />
                 ))}
               </div>
@@ -188,14 +193,14 @@ export default function ConnectorsPage() {
               {searchTerm ? 'No connectors match your search.' : 'No connectors available.'}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {paginatedConnectors.map((connector) => (
                 <Card
                   key={connector}
                   className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => handleConnectorClick(connector)}
                 >
-                  <CardContent className="p-4 flex items-center justify-between">
+                  <CardContent className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Plug className="h-5 w-5 text-primary" />
                       <div>
@@ -205,7 +210,7 @@ export default function ConnectorsPage() {
                         </p>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>
                 </Card>
               ))}
@@ -214,7 +219,7 @@ export default function ConnectorsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 pt-4">
+            <div className="flex justify-center gap-2 pt-1">
               <Button
                 variant="outline"
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}

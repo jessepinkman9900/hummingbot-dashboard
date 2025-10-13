@@ -13,6 +13,11 @@ frontend/
 ```
 
 ## Commands
+### Build Frontend
+```sh
+cd frontend && pnpm run build
+```
+
 ### Run Frontend
 ```sh
 cd frontend && pnpm run dev

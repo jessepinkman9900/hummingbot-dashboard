@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 
 // Dynamically import Monaco Editor and Diff Editor to avoid SSR issues
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
@@ -53,8 +54,8 @@ interface ScriptEditorProps {
   scriptName: string;
   onBack: () => void;
 }
-
 export function ScriptEditor({ scriptName, onBack }: ScriptEditorProps) {
+  const router = useRouter();
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState(''); // Store original content for diff
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -479,13 +480,23 @@ config = MyStrategyConfig()
 
   return (
     <div className="w-full flex flex-col h-full">
+      <div className="flex items-center gap-4 mb-4">
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        {/* <div className="space-y-1">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Plug className="h-8 w-8" />
+            {connectorName}
+          </h1>
+          <p className="text-muted-foreground">
+            Connector configuration and trading rules
+          </p>
+        </div> */}
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
         <div className="flex items-center space-x-4">
-          <Button onClick={onBack} variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
           <div className="flex items-center space-x-3">
             {getFileIcon()}
             <div>

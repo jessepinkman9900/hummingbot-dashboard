@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, RefreshCw, Shield, Settings, Trash2, Users } from 'lucide-react';
+import { Plus, Shield, Settings, Trash2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAccounts, useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
 import { AddAccountDialog } from '@/components/portfolio/add-account-dialog';
 import {
@@ -27,13 +27,13 @@ export default function AccountsPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const accountsPerPage = 7;
 
   const { 
     data: accounts = [], 
     isLoading, 
-    error, 
-    refetch,
-    isFetching 
+    error 
   } = useAccounts();
 
   const deleteAccountMutation = useDeleteAccount();
@@ -63,8 +63,21 @@ export default function AccountsPage() {
     }
   };
 
-  const handleRefresh = () => {
-    refetch();
+
+
+  // Pagination logic
+  const sortedAccounts = [...accounts].sort((a, b) => a.localeCompare(b));
+  const totalPages = Math.ceil(sortedAccounts.length / accountsPerPage);
+  const startIndex = (currentPage - 1) * accountsPerPage;
+  const endIndex = startIndex + accountsPerPage;
+  const paginatedAccounts = sortedAccounts.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
   if (error) {
@@ -95,70 +108,50 @@ export default function AccountsPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isFetching || isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button onClick={handleAddAccount}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Account
-            </Button>
-          </div>
-        </div>
-
-        {/* Accounts Summary */}
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card>
-            <CardContent className="px-4 py-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Total Accounts</p>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-xl font-bold">
-                {isLoading ? <Skeleton className="h-8 w-16" /> : accounts.length}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="px-4 py-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">API Status</p>
-                <Shield className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-xl font-bold">
-                {error ? (
-                  <Badge variant="destructive">Error</Badge>
-                ) : (
-                  <Badge variant="default" className="bg-green-100 text-green-800">Connected</Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="px-4 py-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
-                <RefreshCw className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-xl font-bold">
-                {new Date().toLocaleTimeString()}
-              </div>
-            </CardContent>
-          </Card>
+          <Button onClick={handleAddAccount}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Account
+          </Button>
         </div>
 
         {/* Accounts List */}
         <Card>
           <CardHeader>
-            <CardTitle>All Accounts</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                All Accounts 
+                {!isLoading && (
+                  <Badge variant="secondary" className="text-xs">
+                    {accounts.length}
+                  </Badge>
+                )}
+              </CardTitle>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -193,7 +186,7 @@ export default function AccountsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {[...accounts].sort((a, b) => a.localeCompare(b)).map((accountName, index) => (
+                {paginatedAccounts.map((accountName) => (
                   <div key={accountName} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                     <Link 
                       href={`/accounts/${accountName}`} 
@@ -205,15 +198,11 @@ export default function AccountsPage() {
                       <div>
                         <h3 className="font-semibold text-lg hover:text-primary transition-colors">{accountName}</h3>
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span>Account #{index + 1}</span>
                           {accountName === 'master' && (
                             <Badge variant="outline" className="text-xs">
                               Default Account
                             </Badge>
                           )}
-                          <span className="text-xs text-blue-600 hover:text-blue-800">
-                            Click to view credentials →
-                          </span>
                         </div>
                       </div>
                     </Link>
@@ -248,46 +237,34 @@ export default function AccountsPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* API Response Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Raw API Response</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto">
-              {JSON.stringify({ accounts: accounts || [] }, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-        
-        {/* Add Account Dialog */}
-        <AddAccountDialog 
-          open={showAddDialog} 
-          onOpenChange={setShowAddDialog} 
-        />
-        
-        {/* Delete Account Dialog */}
-        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the account
-                &ldquo;{accountToDelete}&rdquo; and remove all associated credentials.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDeleteAccount}>
-                Delete Account
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
+
+      {/* Add Account Dialog */}
+      <AddAccountDialog 
+        open={showAddDialog} 
+        onOpenChange={setShowAddDialog} 
+      />
+      
+      {/* Delete Account Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the account
+              &ldquo;{accountToDelete}&rdquo; and remove all associated credentials.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteAccount}>
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

@@ -30,13 +30,13 @@ interface HistoricalMarketDataFormProps {
 }
 
 const INTERVALS = [
-  { value: '1m', label: '1 minute' },
-  { value: '5m', label: '5 minutes' },
-  { value: '15m', label: '15 minutes' },
-  { value: '30m', label: '30 minutes' },
-  { value: '1h', label: '1 hour' },
-  { value: '4h', label: '4 hours' },
-  { value: '1d', label: '1 day' },
+  { value: '1m', label: '1m' },
+  { value: '5m', label: '5m' },
+  { value: '15m', label: '15m' },
+  { value: '30m', label: '30m' },
+  { value: '1h', label: '1h' },
+  { value: '4h', label: '4h' },
+  { value: '1d', label: '1d' },
 ];
 
 // Helper function to convert date-time string to Unix timestamp
@@ -155,11 +155,11 @@ export function HistoricalMarketDataForm({ onSubmit, loading = false }: Historic
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Horizontal Layout for Main Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Horizontal Layout for All Fields Including Submit Button */}
+          <div className="flex flex-wrap items-end gap-4">
             {/* Connector Selection */}
             <div className="space-y-2">
-              <Label htmlFor="connector" className="flex items-center gap-2">
+              <Label htmlFor="connector" className="flex items-center gap-2 h-5">
                 <Building2 className="h-4 w-4" />
                 Connector
               </Label>
@@ -170,20 +170,24 @@ export function HistoricalMarketDataForm({ onSubmit, loading = false }: Historic
                 disabled={loadingConnectors}
                 options={(availableConnectors || []).map(connector => ({ value: connector, label: connector }))}
                 emptyMessage="No connectors available"
+                tabIndex={1}
+                className="w-48"
               />
-              {errors.connectorName && (
-                <p className="text-sm text-red-600">{errors.connectorName}</p>
-              )}
-              {connectorsError && (
-                <p className="text-sm text-amber-600">
-                  Failed to load connectors
-                </p>
-              )}
+              <div className="min-h-[1.25rem]">
+                {errors.connectorName && (
+                  <p className="text-sm text-red-600">{errors.connectorName}</p>
+                )}
+                {connectorsError && (
+                  <p className="text-sm text-amber-600">
+                    Failed to load connectors
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Trading Pair Selection */}
             <div className="space-y-2">
-              <Label htmlFor="tradingPair">Trading Pair</Label>
+              <Label htmlFor="tradingPair" className="h-5">Trading Pair</Label>
               <SearchableSelect
                 value={formData.tradingPair}
                 onValueChange={(value) => handleInputChange('tradingPair', value)}
@@ -195,23 +199,27 @@ export function HistoricalMarketDataForm({ onSubmit, loading = false }: Historic
                 disabled={!formData.connectorName || loadingTradingRules}
                 options={(availableTradingPairs || []).map(pair => ({ value: pair, label: pair }))}
                 emptyMessage="No trading pairs available"
+                tabIndex={2}
+                className="w-40"
               />
-              {errors.tradingPair && (
-                <p className="text-sm text-red-600">{errors.tradingPair}</p>
-              )}
-              {loadingTradingRules && formData.connectorName && (
-                <p className="text-sm text-muted-foreground">Loading trading pairs...</p>
-              )}
-              {tradingRulesError && formData.connectorName && (
-                <p className="text-sm text-amber-600">
-                  Failed to load trading pairs
-                </p>
-              )}
+              <div className="min-h-[1.25rem]">
+                {errors.tradingPair && (
+                  <p className="text-sm text-red-600">{errors.tradingPair}</p>
+                )}
+                {loadingTradingRules && formData.connectorName && (
+                  <p className="text-sm text-muted-foreground">Loading trading pairs...</p>
+                )}
+                {tradingRulesError && formData.connectorName && (
+                  <p className="text-sm text-amber-600">
+                    Failed to load trading pairs
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Time Interval */}
             <div className="space-y-2">
-              <Label htmlFor="interval" className="flex items-center gap-2">
+              <Label htmlFor="interval" className="flex items-center gap-2 h-5">
                 <Clock className="h-4 w-4" />
                 Interval
               </Label>
@@ -219,8 +227,8 @@ export function HistoricalMarketDataForm({ onSubmit, loading = false }: Historic
                 value={formData.interval}
                 onValueChange={(value) => handleInputChange('interval', value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select interval" />
+                <SelectTrigger tabIndex={3} className="w-20 justify-between text-left font-normal">
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   {INTERVALS.map((interval) => (
@@ -230,89 +238,71 @@ export function HistoricalMarketDataForm({ onSubmit, loading = false }: Historic
                   ))}
                 </SelectContent>
               </Select>
-              {errors.interval && (
-                <p className="text-sm text-red-600">{errors.interval}</p>
-              )}
+              <div className="min-h-[1.25rem]">
+                {errors.interval && (
+                  <p className="text-sm text-red-600">{errors.interval}</p>
+                )}
+              </div>
             </div>
 
             {/* Start Time */}
             <div className="space-y-2">
-              <Label htmlFor="startTime" className="flex items-center gap-2">
+              <Label htmlFor="startTime" className="flex items-center gap-2 h-5">
                 <Calendar className="h-4 w-4" />
                 Start Time
               </Label>
               <Input
                 id="startTime"
                 type="datetime-local"
+                tabIndex={4}
+                className="h-10 w-52"
                 value={unixToDateTime(formData.startTime)}
                 onChange={(e) => {
                   const unixTime = dateTimeToUnix(e.target.value);
                   handleInputChange('startTime', unixTime);
                 }}
               />
-              {errors.startTime && (
-                <p className="text-sm text-red-600">{errors.startTime}</p>
-              )}
+              <div className="min-h-[1.25rem]">
+                {errors.startTime && (
+                  <p className="text-sm text-red-600">{errors.startTime}</p>
+                )}
+              </div>
             </div>
 
             {/* End Time */}
             <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
+              <Label htmlFor="endTime" className="h-5">End Time</Label>
               <Input
                 id="endTime"
                 type="datetime-local"
+                tabIndex={5}
+                className="h-10 w-52"
                 value={unixToDateTime(formData.endTime)}
                 onChange={(e) => {
                   const unixTime = dateTimeToUnix(e.target.value);
                   handleInputChange('endTime', unixTime);
                 }}
               />
-              {errors.endTime && (
-                <p className="text-sm text-red-600">{errors.endTime}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Select and Submit in horizontal layout */}
-          <div className="flex flex-wrap items-end gap-4">
-            {/* Quick Time Range Buttons */}
-            <div className="space-y-2">
-              <Label>Quick Select</Label>
-              <div className="flex gap-2 text-sm">
-                {[
-                  { label: '1H', hours: 1 },
-                  { label: '6H', hours: 6 },
-                  { label: '1D', hours: 24 },
-                  { label: '7D', hours: 24 * 7 },
-                ].map((range) => (
-                  <Button
-                    key={range.label}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const now = Math.floor(Date.now() / 1000);
-                      const start = now - (range.hours * 60 * 60);
-                      setFormData(prev => ({
-                        ...prev,
-                        startTime: start,
-                        endTime: now
-                      }));
-                    }}
-                  >
-                    {range.label}
-                  </Button>
-                ))}
+              <div className="min-h-[1.25rem]">
+                {errors.endTime && (
+                  <p className="text-sm text-red-600">{errors.endTime}</p>
+                )}
               </div>
             </div>
 
             {/* Submit Button */}
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.connectorName || !formData.tradingPair}
-            >
-              {loading ? 'Loading Chart...' : 'Load Historical Data'}
-            </Button>
+            <div className="space-y-2 ml-auto">
+              <Label className="h-5">&nbsp;</Label> {/* Empty label for alignment */}
+              <Button 
+                type="submit" 
+                tabIndex={6}
+                disabled={loading || !formData.connectorName || !formData.tradingPair}
+                className="h-10"
+              >
+                {loading ? 'Loading Chart...' : 'Load Historical Data'}
+              </Button>
+              <div className="min-h-[1.25rem]"></div> {/* Empty space for alignment with error message areas */}
+            </div>
           </div>
         </form>
       </CardContent>

@@ -19,6 +19,7 @@ interface SearchableSelectProps {
   disabled?: boolean
   className?: string
   emptyMessage?: string
+  tabIndex?: number
 }
 
 export function SearchableSelect({
@@ -29,6 +30,7 @@ export function SearchableSelect({
   disabled = false,
   className,
   emptyMessage = "No options found",
+  tabIndex,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
@@ -56,63 +58,45 @@ export function SearchableSelect({
     return sortedOptions.find(option => option.value === value)
   }, [sortedOptions, value])
 
-  // Handle keyboard navigation on the search input
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    console.log('Search key pressed:', e.key, 'filteredOptions length:', filteredOptions.length, 'current index:', highlightedIndex)
-    
-    if (filteredOptions.length === 0) return
-    
-    switch (e.key) {
-      case "Escape":
-        e.preventDefault()
-        setOpen(false)
-        setSearchQuery("")
-        break
-      case "ArrowDown":
-        e.preventDefault()
-        e.stopPropagation()
-        const nextIndex = highlightedIndex < filteredOptions.length - 1 ? highlightedIndex + 1 : 0
-        console.log('ArrowDown: moving from', highlightedIndex, 'to', nextIndex)
-        setHighlightedIndex(nextIndex)
-        break
-      case "ArrowUp":
-        e.preventDefault()
-        e.stopPropagation()
-        const prevIndex = highlightedIndex > 0 ? highlightedIndex - 1 : filteredOptions.length - 1
-        console.log('ArrowUp: moving from', highlightedIndex, 'to', prevIndex)
-        setHighlightedIndex(prevIndex)
-        break
-      case "Enter":
-        e.preventDefault()
-        e.stopPropagation()
-        if (filteredOptions[highlightedIndex]) {
-          console.log('Enter: selecting', filteredOptions[highlightedIndex])
-          onValueChange?.(filteredOptions[highlightedIndex].value)
-          setOpen(false)
-          setSearchQuery("")
-        }
-        break
-    }
-  }
-
-  // Handle keyboard navigation on the trigger button
-  const handleTriggerKeyDown = (e: React.KeyboardEvent) => {
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault()
-        setOpen(true)
-        setHighlightedIndex(0)
-        setTimeout(() => searchInputRef.current?.focus(), 50)
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setOpen(true);
+        setHighlightedIndex(0);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
       }
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault()
-        setOpen(true)
-        setHighlightedIndex(0)
-        setTimeout(() => searchInputRef.current?.focus(), 50)
-      }
-      return
+      return;
     }
-  }
+
+    switch (e.key) {
+      case 'Escape':
+        setOpen(false);
+        setSearchQuery('');
+        setHighlightedIndex(0);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev < filteredOptions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => prev > 0 ? prev - 1 : prev);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (filteredOptions[highlightedIndex]) {
+          onValueChange?.(filteredOptions[highlightedIndex].value);
+          setOpen(false);
+          setSearchQuery('');
+          setHighlightedIndex(0);
+        }
+        break;
+    }
+  };
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -127,28 +111,21 @@ export function SearchableSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-
-
-  // Reset highlighted index when filtered options change, but preserve if possible
+  // Reset highlighted index when filtered options change
   React.useEffect(() => {
     if (filteredOptions.length > 0) {
-      // If the current highlighted index is out of bounds, reset to 0
-      // Otherwise, keep the current position
       setHighlightedIndex(prev => {
-        const newIndex = prev >= filteredOptions.length ? 0 : prev
-        console.log('Options changed, highlighted index:', prev, '->', newIndex)
-        return newIndex
-      })
-    } else {
-      setHighlightedIndex(0)
+        if (prev >= filteredOptions.length) {
+          return 0;
+        }
+        return prev;
+      });
     }
   }, [filteredOptions.length])
 
   // Focus the search input when dropdown opens
   React.useEffect(() => {
     if (open && searchInputRef.current) {
-      console.log('Dropdown opened, focusing search input')
-      // Use a longer delay to ensure the dropdown is fully rendered
       const timer = setTimeout(() => {
         searchInputRef.current?.focus()
       }, 150)
@@ -181,7 +158,7 @@ export function SearchableSelect({
       <Button
         type="button"
         variant="outline"
-        className="w-full justify-between text-left font-normal"
+        className={cn("w-full justify-between text-left font-normal", className)}
         disabled={disabled}
         onClick={() => {
           const wasOpen = open
@@ -193,7 +170,8 @@ export function SearchableSelect({
             }, 100)
           }
         }}
-        onKeyDown={handleTriggerKeyDown}
+        onKeyDown={handleKeyDown}
+        tabIndex={tabIndex}
       >
         <span className={cn("block truncate", !selectedOption && "text-muted-foreground")}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -202,24 +180,23 @@ export function SearchableSelect({
       </Button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-          <div className="p-2 border-b border-gray-100">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-border rounded-md shadow-lg">
+          <div className="p-2 border-b border-border">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
+                <Input
                 ref={searchInputRef}
                 placeholder="Type to search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                className="pl-8 pr-8"
+                onKeyDown={handleKeyDown}
+                className="pl-8 pr-8 h-9"
+                tabIndex={0}
+                role="combobox"
+                aria-expanded={open}
+                aria-autocomplete="list"
+                aria-controls="combobox-options"
                 autoFocus
-                onFocus={() => {
-                  // Ensure we have a valid highlighted index when focused
-                  if (filteredOptions.length > 0 && (highlightedIndex >= filteredOptions.length || highlightedIndex < 0)) {
-                    setHighlightedIndex(0)
-                  }
-                }}
               />
               {searchQuery && (
                 <Button
@@ -235,7 +212,12 @@ export function SearchableSelect({
             </div>
           </div>
           
-          <div ref={listRef} className="max-h-60 overflow-auto">
+          <div 
+            ref={listRef} 
+            className="max-h-60 overflow-auto"
+            id="combobox-options"
+            role="listbox"
+          >
             {filteredOptions.length === 0 ? (
               <div className="px-4 py-2 text-sm text-muted-foreground">
                 {emptyMessage}
@@ -244,11 +226,13 @@ export function SearchableSelect({
               filteredOptions.map((option, index) => (
                 <div
                   key={option.value}
+                  role="option"
+                  aria-selected={option.value === value}
                   data-highlighted={index === highlightedIndex}
                   className={cn(
-                    "cursor-pointer px-4 py-2 text-sm hover:bg-gray-100 transition-colors",
-                    index === highlightedIndex && "bg-gray-100",
-                    option.value === value && "bg-blue-50 text-blue-600 font-medium"
+                    "cursor-pointer px-4 py-2 text-sm hover:bg-accent transition-colors",
+                    index === highlightedIndex && "bg-accent",
+                    option.value === value && "bg-primary/10 text-primary font-medium"
                   )}
                   onClick={() => {
                     onValueChange?.(option.value)

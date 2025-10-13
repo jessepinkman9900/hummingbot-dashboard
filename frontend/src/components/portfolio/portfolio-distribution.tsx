@@ -4,8 +4,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, Wallet, Building2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Wallet, Building2 } from 'lucide-react';
+
 
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,12 +29,12 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
     : accounts;
   
   const { 
-    data: tokenDistribution, 
+    data: portfolioDistribution, 
     isLoading: loadingTokens, 
-    error: tokensError,
-    refetch: refetchTokens,
-    isFetching: refreshingTokens
+    error: portfolioError
   } = usePortfolioDistribution(accountsToUse);
+  
+
   
   // const { 
   //   data: accountsDistribution, 
@@ -43,15 +43,7 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
   //   refetch: refetchAccounts,
   //   isFetching: refreshingAccounts
   // } = useAccountsDistribution(accountsToUse);
-  
-  const refreshing = refreshingTokens; // || refreshingAccounts;
-  
-  const handleRefresh = async () => {
-    await Promise.all([
-      refetchTokens(),
-      // refetchAccounts()
-    ]);
-  };
+
   
   const formatCurrency = (value: number | undefined | null) => {
     const safeValue = value || 0;
@@ -70,9 +62,9 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
   
   // Transform token distribution data
   const tokenData = React.useMemo(() => {
-    if (!tokenDistribution?.distribution) return [];
+    if (!portfolioDistribution?.distribution) return [];
     
-    return tokenDistribution.distribution
+    return portfolioDistribution.distribution
       .map((data: TokenDistributionItem) => ({
         symbol: data.token,
         value: data.total_value || 0,
@@ -80,8 +72,8 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
         balance: data.total_units || 0,
         accounts: data.accounts || {}
       }))
-      .sort((a, b) => b.value - a.value);
-  }, [tokenDistribution]);
+      .sort((a: any, b: any) => b.value - a.value);
+  }, [portfolioDistribution]);
   
   // Transform accounts distribution data
   // const accountData = React.useMemo(() => {
@@ -123,7 +115,7 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
     );
   }
   
-  if (tokensError) { // || accountsError
+  if (portfolioError) { // || accountsError
     return (
       <Card>
         <CardHeader>
@@ -144,14 +136,6 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Portfolio Distribution</CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </Button>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="tokens" className="w-full">
@@ -170,13 +154,13 @@ export function PortfolioDistribution({ selectedAccounts }: PortfolioDistributio
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">Total Value</div>
               <div className="font-medium">
-                {formatCurrency(tokenDistribution?.total_portfolio_value || 0)}
+                {formatCurrency(portfolioDistribution?.total_portfolio_value || 0)}
               </div>
             </div>
             
             {tokenData.length > 0 ? (
               <div className="space-y-4">
-                {tokenData.map((token) => (
+                {tokenData.map((token: any) => (
                   <div key={token.symbol} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">

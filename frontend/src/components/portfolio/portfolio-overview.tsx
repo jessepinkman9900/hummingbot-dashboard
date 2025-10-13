@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Settings, Trash2, Shield, RefreshCw } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,29 +9,10 @@ import { useAccounts, usePortfolioState } from '@/lib/hooks/useAccountsQuery';
 import { useSelectedAccount } from '@/lib/hooks/useSelectedAccount';
 import Link from 'next/link';
 
-interface PortfolioOverviewProps {
-  onAddAccount: () => void;
-  onDeleteAccount: (accountName: string) => void;
-  onViewSettings: (accountName: string) => void;
-}
-
-export function PortfolioOverview({ 
-  onAddAccount, 
-  onDeleteAccount, 
-  onViewSettings 
-}: PortfolioOverviewProps) {
+export function PortfolioOverview() {
   const selectedAccount = useSelectedAccount();
-  const { data: accounts = [], isLoading: loadingAccounts, error: accountsError, refetch: refetchAccounts, isFetching: refreshingAccounts } = useAccounts();
-  const { data: portfolioState, isLoading: loadingPortfolio, error: portfolioError, refetch: refetchPortfolio, isFetching: refreshingPortfolio } = usePortfolioState([selectedAccount]);
-
-  const refreshing = refreshingAccounts || refreshingPortfolio;
-
-  const handleRefresh = async () => {
-    await Promise.all([
-      refetchAccounts(),
-      refetchPortfolio(),
-    ]);
-  };
+  const { error: accountsError } = useAccounts();
+  const { data: portfolioState, isLoading: loadingPortfolio, error: portfolioError } = usePortfolioState([selectedAccount]);
 
   const formatCurrency = (value: number | undefined | null) => {
     if (value === undefined || value === null || isNaN(value)) {
@@ -64,16 +45,6 @@ export function PortfolioOverview({
       <Alert className="mb-4">
         <AlertDescription>
           Failed to load data. Please check your connection and authentication.
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="ml-2"
-            disabled={refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Retry
-          </Button>
         </AlertDescription>
       </Alert>
     );
@@ -120,23 +91,12 @@ export function PortfolioOverview({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Account: {selectedAccount}</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
+          <Link href={`/accounts/${selectedAccount}`}>
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
             </Button>
-            <Link href={`/accounts/${selectedAccount}`}>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-            </Link>
-          </div>
+          </Link>
         </CardHeader>
         <CardContent>
           {loadingPortfolio ? (

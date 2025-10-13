@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, RefreshCw, Shield, Trash2, ArrowLeft, Key } from 'lucide-react';
+import { Plus, Shield, Trash2, ArrowLeft, Key } from 'lucide-react';
 import { useAccountCredentials, useDeleteCredential } from '@/lib/hooks/useAccountsQuery';
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
+
 import { AddCredentialDialog } from '@/components/accounts/add-credential-dialog';
 
 export default function AccountDetailsPage() {
@@ -35,9 +35,7 @@ export default function AccountDetailsPage() {
   const { 
     data: credentials = [], 
     isLoading, 
-    error, 
-    refetch,
-    isFetching 
+    error
   } = useAccountCredentials(accountName);
 
   const deleteCredentialMutation = useDeleteCredential();
@@ -66,9 +64,7 @@ export default function AccountDetailsPage() {
     }
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
+
 
   if (error) {
     return (
@@ -111,21 +107,10 @@ export default function AccountDetailsPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isFetching || isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button onClick={handleAddCredential}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Credential
-            </Button>
-          </div>
+          <Button onClick={handleAddCredential}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Credential
+          </Button>
         </div>
 
         {/* Credentials Summary */}
@@ -163,7 +148,6 @@ export default function AccountDetailsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-sm">

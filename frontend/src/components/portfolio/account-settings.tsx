@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/combobox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -146,21 +146,16 @@ export function AccountSettings({ accountName, onBack }: AccountSettingsProps) {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="connector">Connector</Label>
-                <Select
+                <SearchableSelect
+                  options={availableNewConnectors.map(connector => ({
+                    value: connector,
+                    label: connector
+                  }))}
                   value={selectedConnector}
                   onValueChange={handleConnectorChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a connector" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableNewConnectors.map((connector) => (
-                      <SelectItem key={connector} value={connector}>
-                        {connector}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Search and select a connector"
+                  emptyMessage="No connectors found"
+                />
               </div>
               
               {selectedConnector && (

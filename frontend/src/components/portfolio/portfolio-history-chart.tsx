@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+
 
 import { PortfolioChart } from '@/components/charts/portfolio-chart';
 import { 
@@ -93,9 +93,7 @@ export function PortfolioHistoryChart({
   const { 
     data: historyData, 
     isLoading: loadingHistory, 
-    error: historyError,
-    refetch: refetchHistory,
-    isFetching: refreshingHistory
+    error: historyError
   } = usePortfolioHistory(historyFilters);
   
   const { data: currentPortfolio } = usePortfolioState(historyFilters.accounts as string[]);
@@ -207,14 +205,7 @@ export function PortfolioHistoryChart({
               <SelectItem value="1y">1Y</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => refetchHistory()}
-            disabled={refreshingHistory}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshingHistory ? 'animate-spin' : ''}`} />
-          </Button>
+
         </div>
       </CardHeader>
       <CardContent>

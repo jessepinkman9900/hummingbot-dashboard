@@ -13,13 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/combobox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Plus } from 'lucide-react';
@@ -211,26 +205,21 @@ export function AddCredentialDialog({ accountName, open, onOpenChange }: AddCred
               ) : (
                 <div className="space-y-2">
                   <Label htmlFor="connector">Available Connectors</Label>
-                  <Select
+                  <SearchableSelect
+                    options={connectors.map(connector => ({
+                      value: connector,
+                      label: connector
+                    }))}
                     value={selectedConnector}
                     onValueChange={handleConnectorChange}
                     disabled={connectorsLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        connectorsLoading 
-                          ? "Loading connectors..." 
-                          : "Select a connector"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {connectors.map((connector) => (
-                        <SelectItem key={connector} value={connector}>
-                          {connector}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={
+                      connectorsLoading 
+                        ? "Loading connectors..." 
+                        : "Search and select a connector"
+                    }
+                    emptyMessage="No connectors found"
+                  />
                 </div>
               )}
             </CardContent>
