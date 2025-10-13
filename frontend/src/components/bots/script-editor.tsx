@@ -12,7 +12,6 @@ import {
   ArrowLeft,
   Save,
   Download,
-  Upload,
   FileText,
   Code,
   AlertCircle,
@@ -317,26 +316,6 @@ config = MyStrategyConfig()
     toast.success('Script downloaded');
   };
 
-  const handleUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.py,.txt';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const fileContent = e.target?.result as string;
-          setContent(fileContent);
-          setHasUnsavedChanges(true);
-          toast.success('File uploaded');
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  };
-
   const toggleViewMode = () => {
     setViewMode(viewMode === 'edit' ? 'diff' : 'edit');
   };
@@ -598,13 +577,6 @@ config = MyStrategyConfig()
             </Tooltip>
           </TooltipProvider>
           <div className="w-px h-4 bg-border" />
-          {/* Show Upload button only for existing scripts, not new scripts */}
-          {!isNewScript && (
-            <Button onClick={handleUpload} variant="ghost" size="sm">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload
-            </Button>
-          )}
           <Button onClick={handleDownload} variant="ghost" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Download
@@ -730,7 +702,6 @@ config = MyStrategyConfig()
               renderWhitespace: 'selection',
               rulers: [80, 120],
               glyphMargin: true, // Enable glyph margin for diff indicators
-              folding: true,
               showFoldingControls: 'always',
             }}
             onMount={(editor) => {

@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Settings, TrendingUp, Plug, Key, DollarSign, Search } from 'lucide-react';
+import { ArrowLeft, Settings, TrendingUp, Plug, Key, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -42,9 +41,6 @@ export default function ConnectorDetailPage() {
   const [loadingRules, setLoadingRules] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const [rulesError, setRulesError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
 
   // Fetch both config map and trading rules simultaneously when page loads
   useEffect(() => {
@@ -125,39 +121,6 @@ export default function ConnectorDetailPage() {
     }
     return value.toString();
   };
-
-  // Filter and sort trading pairs based on search term (fuzzy search) and alphabetically
-  const filteredTradingPairs = useMemo(() => {
-    // First sort trading pairs alphabetically
-    const allPairs = Object.keys(tradingRules).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    
-    if (!searchTerm) return allPairs;
-
-    const searchLower = searchTerm.toLowerCase();
-    return allPairs.filter((pair) => {
-      const pairLower = pair.toLowerCase();
-      
-      // Simple fuzzy search: check if all characters of search term exist in order
-      let searchIndex = 0;
-      for (let i = 0; i < pairLower.length && searchIndex < searchLower.length; i++) {
-        if (pairLower[i] === searchLower[searchIndex]) {
-          searchIndex++;
-        }
-      }
-      
-      return searchIndex === searchLower.length || pairLower.includes(searchLower);
-    });
-  }, [tradingRules, searchTerm]);
-
-  // Pagination for trading pairs
-  const totalPages = Math.ceil(filteredTradingPairs.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedTradingPairs = filteredTradingPairs.slice(startIndex, startIndex + itemsPerPage);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
 
   const tradingPairs = Object.keys(tradingRules);
 
@@ -256,10 +219,10 @@ export default function ConnectorDetailPage() {
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 Trading Rules
-                <Badge variant="secondary">{filteredTradingPairs.length} pairs</Badge>
+                <Badge variant="secondary">{tradingPairs.length} pairs</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               {loadingRules ? (
                 <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -286,26 +249,8 @@ export default function ConnectorDetailPage() {
                   No trading rules available
                 </div>
               ) : (
-                <>
-                  {/* Search Input */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      placeholder="Search trading pairs..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {/* Trading Pairs */}
-                  {paginatedTradingPairs.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      {searchTerm ? 'No trading pairs match your search.' : 'No trading pairs available.'}
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {paginatedTradingPairs.map((pair) => {
+                <div className="space-y-6">
+                  {tradingPairs.map((pair) => {
                     const rules = tradingRules[pair];
                     return (
                       <Card key={pair}>
@@ -373,32 +318,7 @@ export default function ConnectorDetailPage() {
                       </Card>
                     );
                   })}
-                    </div>
-                  )}
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex justify-center gap-2 pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        Previous
-                      </Button>
-                      <span className="flex items-center px-4 py-2 text-sm text-muted-foreground">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  )}
-                </>
+                </div>
               )}
             </CardContent>
           </Card>

@@ -9,7 +9,6 @@ from hummingbot.strategy.strategy_v2_base import StrategyV2Base, StrategyV2Confi
 from hummingbot.strategy_v2.models.base import RunnableStatus
 from hummingbot.strategy_v2.models.executor_actions import CreateExecutorAction, StopExecutorAction
 
-
 class V2WithControllersConfig(StrategyV2ConfigBase):
     script_file_name: str = os.path.basename(__file__)
     candles_config: List[CandlesConfig] = []

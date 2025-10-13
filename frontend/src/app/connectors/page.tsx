@@ -48,15 +48,12 @@ export default function ConnectorsPage() {
     fetchConnectors();
   }, []);
 
-  // Filter and sort connectors based on search term (fuzzy search) and alphabetically
+  // Filter connectors based on search term (fuzzy search)
   const filteredConnectors = useMemo(() => {
-    // First sort connectors alphabetically
-    const sortedConnectors = [...connectors].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    
-    if (!searchTerm) return sortedConnectors;
+    if (!searchTerm) return connectors;
 
     const searchLower = searchTerm.toLowerCase();
-    return sortedConnectors.filter((connector) => {
+    return connectors.filter((connector) => {
       const connectorLower = connector.toLowerCase();
       
       // Simple fuzzy search: check if all characters of search term exist in order
@@ -89,11 +86,15 @@ export default function ConnectorsPage() {
     return (
       <MainLayout>
         <div className="space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Connectors</h1>
-            <p className="text-muted-foreground">
-              Explore available trading connectors and their configurations
-            </p>
+          {/* Page Header */}
+          <div className="flex items-center space-x-2">
+            <Plug className="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Connectors</h1>
+              <p className="text-muted-foreground">
+                Explore available trading connectors and their configurations
+              </p>
+            </div>
           </div>
 
           <Card>
@@ -118,6 +119,16 @@ export default function ConnectorsPage() {
     return (
       <MainLayout>
         <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex items-center space-x-2">
+            <Plug className="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Connectors</h1>
+              <p className="text-muted-foreground">
+                Explore available trading connectors and their configurations
+              </p>
+            </div>
+          </div>
           <Card>
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
@@ -140,12 +151,16 @@ export default function ConnectorsPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Connectors</h1>
-        <p className="text-muted-foreground">
-          Explore available trading connectors and their configurations
-        </p>
-      </div>
+        {/* Page Header */}
+        <div className="flex items-center space-x-2">
+          <Plug className="h-8 w-8" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Connectors</h1>
+            <p className="text-muted-foreground">
+              Explore available trading connectors and their configurations
+            </p>
+          </div>
+        </div>
 
       <Card>
         <CardHeader>

@@ -1,12 +1,13 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { HealthStatusButton } from '@/components/system/health-status-button';
 import { ThemePicker } from '@/components/ui/theme-picker';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { AccountSelector } from '@/components/ui/account-selector';
 import { useAppStore } from '@/lib/store';
 
 interface MainLayoutProps {
@@ -33,6 +34,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             
             {/* Header actions */}
             <div className="flex items-center gap-2">
+              <AccountSelector />
               <ThemeToggle />
               <ThemePicker />
               <HealthStatusButton />

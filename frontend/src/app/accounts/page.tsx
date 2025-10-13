@@ -70,7 +70,7 @@ export default function AccountsPage() {
   if (error) {
     return (
       <MainLayout>
-        <div className="container mx-auto py-6">
+        <div className="space-y-6">
           <Alert>
             <AlertDescription>
               {error?.message || 'An error occurred while loading accounts'}
@@ -83,11 +83,11 @@ export default function AccountsPage() {
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
+          <div className="flex items-center space-x-2">
+            <Users className="h-8 w-8" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
               <p className="text-muted-foreground">
@@ -113,26 +113,26 @@ export default function AccountsPage() {
         </div>
 
         {/* Accounts Summary */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Accounts</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-4 py-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Total Accounts</p>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">
                 {isLoading ? <Skeleton className="h-8 w-16" /> : accounts.length}
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">API Status</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-4 py-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">API Status</p>
+                <Shield className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">
                 {error ? (
                   <Badge variant="destructive">Error</Badge>
                 ) : (
@@ -143,12 +143,12 @@ export default function AccountsPage() {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
-              <RefreshCw className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm">
+            <CardContent className="px-4 py-1 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">
                 {new Date().toLocaleTimeString()}
               </div>
             </CardContent>
@@ -193,7 +193,7 @@ export default function AccountsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {accounts.map((accountName, index) => (
+                {[...accounts].sort((a, b) => a.localeCompare(b)).map((accountName, index) => (
                   <div key={accountName} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
                     <Link 
                       href={`/accounts/${accountName}`} 

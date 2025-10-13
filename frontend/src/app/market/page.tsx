@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, AlertCircle, TrendingUp, Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, AlertCircle, Activity, ChartCandlestick, Download } from 'lucide-react';
 import { LightweightChart } from '@/components/charts/lightweight-chart';
 import { HistoricalMarketDataForm, HistoricalMarketDataFormData } from '@/components/forms/historical-market-data-form';
 import { CandleData } from '@/lib/api/market-data';
 import { useFetchHistoricalCandles } from '@/lib/hooks/useMarketDataQuery';
+import { toast } from 'sonner';
 
 // Create a simple Alert component since it doesn't exist
 function Alert({ variant, children }: { variant?: 'destructive'; children: React.ReactNode }) {
@@ -40,6 +42,64 @@ export default function MarketDataPage() {
   const [currentConfig, setCurrentConfig] = useState<HistoricalMarketDataFormData | null>(null);
   
   const fetchHistoricalCandlesMutation = useFetchHistoricalCandles();
+
+  // Convert candle data to CSV format and download
+  const handleDownload = () => {
+    if (!chartData.length || !currentConfig) {
+      toast.error('No data available to download');
+      return;
+    }
+
+    // Create CSV header
+    const csvHeaders = [
+      'timestamp',
+      'open',
+      'high',
+      'low',
+      'close',
+      'volume',
+      'quote_asset_volume',
+      'n_trades',
+      'taker_buy_base_volume',
+      'taker_buy_quote_volume'
+    ];
+
+    // Convert data to CSV rows
+    const csvRows = chartData.map(candle => [
+      candle.timestamp,
+      candle.open,
+      candle.high,
+      candle.low,
+      candle.close,
+      candle.volume || 0,
+      candle.quote_asset_volume || 0,
+      candle.n_trades || 0,
+      candle.taker_buy_base_volume || 0,
+      candle.taker_buy_quote_volume || 0
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [csvHeaders, ...csvRows]
+      .map(row => row.join(','))
+      .join('\n');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // Format filename: {connector_name}_{trading_pair}_{start_unixtime}_{end_unix_time}_{interval}.csv
+    const filename = `${currentConfig.connectorName}_${currentConfig.tradingPair}_${currentConfig.startTime}_${currentConfig.endTime}_${currentConfig.interval}.csv`;
+    a.download = filename;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Market data downloaded successfully');
+  };
 
   const handleFormSubmit = async (formData: HistoricalMarketDataFormData) => {
     setError(null);
@@ -87,7 +147,7 @@ export default function MarketDataPage() {
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex items-center space-x-2">
-          <TrendingUp className="h-8 w-8 text-blue-600" />
+          <ChartCandlestick className="h-8 w-8" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Historical Market Data</h1>
             <p className="text-muted-foreground">
@@ -96,56 +156,31 @@ export default function MarketDataPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Configuration Form */}
-          <div className="lg:col-span-1">
-            <HistoricalMarketDataForm 
-              onSubmit={handleFormSubmit} 
-              loading={fetchHistoricalCandlesMutation.isPending} 
-            />
-            
-            {/* Current Configuration Display */}
-            {currentConfig && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Activity className="h-4 w-4" />
-                    Current Chart
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Connector:</span>
-                    <span className="font-medium">{currentConfig.connectorName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pair:</span>
-                    <span className="font-medium">{currentConfig.tradingPair}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Interval:</span>
-                    <span className="font-medium">{currentConfig.interval}</span>
-                  </div>
-                  <div className="border-t pt-2 mt-2">
-                    <div className="text-xs text-muted-foreground">Time Range:</div>
-                    <div className="text-xs">{formatUnixTime(currentConfig.startTime)}</div>
-                    <div className="text-xs">to {formatUnixTime(currentConfig.endTime)}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        <div className="space-y-6">
+          {/* Configuration Form - Now Horizontal */}
+          <HistoricalMarketDataForm 
+            onSubmit={handleFormSubmit} 
+            loading={fetchHistoricalCandlesMutation.isPending} 
+          />
 
           {/* Chart Display */}
-          <div className="lg:col-span-3">
+          <div>
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {currentConfig 
-                    ? `${currentConfig.tradingPair} - ${currentConfig.connectorName} (${currentConfig.interval})`
-                    : 'Historical Market Chart'
-                  }
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>
+                    {currentConfig 
+                      ? `${currentConfig.tradingPair} - ${currentConfig.connectorName} (${currentConfig.interval})`
+                      : 'Historical Market Chart'
+                    }
+                  </CardTitle>
+                  {chartData.length > 0 && currentConfig && (
+                    <Button onClick={handleDownload} variant="ghost" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download CSV
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {/* Loading State */}
@@ -168,56 +203,47 @@ export default function MarketDataPage() {
                   </Alert>
                 )}
 
-                {/* Chart Display */}
+                {/* Market Data Statistics */}
                 {!fetchHistoricalCandlesMutation.isPending && !error && chartData.length > 0 && (
                   <div className="space-y-4">
-                    <LightweightChart 
-                      data={chartData} 
-                      height={500}
-                      className="w-full border rounded-md"
-                    />
-                    
-                    {/* Chart Statistics */}
+                    {/* Market Statistics */}
                     {chartStats && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
-                        <div className="bg-muted p-3 rounded-md">
-                          <div className="text-muted-foreground text-xs">Records</div>
-                          <div className="font-semibold">{chartStats.totalRecords.toLocaleString()}</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                        <div className="bg-muted p-2 rounded-md">
+                          <div className="text-muted-foreground text-xs">Current Price</div>
+                          <div className="font-semibold flex items-center gap-2">
+                            ${formatPrice(chartStats.lastCandle.close)}
+                            <span className={`text-xs font-medium ${chartStats.priceChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {chartStats.priceChangePercent >= 0 ? '+' : ''}{chartStats.priceChangePercent.toFixed(2)}%
+                            </span>
+                          </div>
                         </div>
-                        <div className="bg-muted p-3 rounded-md">
-                          <div className="text-muted-foreground text-xs">Latest Price</div>
-                          <div className="font-semibold">${formatPrice(chartStats.lastCandle.close)}</div>
+                        <div className="bg-muted p-2 rounded-md">
+                          <div className="text-muted-foreground text-xs">Volume</div>
+                          <div className="font-semibold">{chartStats.totalVolume.toLocaleString()}</div>
                         </div>
-                        <div className="bg-muted p-3 rounded-md">
+                        <div className="bg-muted p-2 rounded-md">
                           <div className="text-muted-foreground text-xs">High</div>
                           <div className="font-semibold text-green-600">${formatPrice(chartStats.highPrice)}</div>
                         </div>
-                        <div className="bg-muted p-3 rounded-md">
+                        <div className="bg-muted p-2 rounded-md">
                           <div className="text-muted-foreground text-xs">Low</div>
                           <div className="font-semibold text-red-600">${formatPrice(chartStats.lowPrice)}</div>
-                        </div>
-                        <div className="bg-muted p-3 rounded-md">
-                          <div className="text-muted-foreground text-xs">Change</div>
-                          <div className={`font-semibold ${chartStats.priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {chartStats.priceChange >= 0 ? '+' : ''}${formatPrice(chartStats.priceChange)}
-                          </div>
-                        </div>
-                        <div className="bg-muted p-3 rounded-md">
-                          <div className="text-muted-foreground text-xs">Change %</div>
-                          <div className={`font-semibold ${chartStats.priceChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {chartStats.priceChangePercent >= 0 ? '+' : ''}{chartStats.priceChangePercent.toFixed(2)}%
-                          </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Additional Data Info */}
-                    {chartStats && (
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <div>Data Range: {formatUnixTime(chartStats.firstCandle.timestamp)} - {formatUnixTime(chartStats.lastCandle.timestamp)}</div>
-                        <div>Total Volume: {chartStats.totalVolume.toLocaleString()}</div>
-                      </div>
-                    )}
+                    {/* Interactive Chart */}
+                    <LightweightChart 
+                      data={chartData} 
+                      height={500}
+                      className="w-full border rounded-md"
+                      legend={currentConfig ? {
+                        exchange: currentConfig.connectorName,
+                        pair: currentConfig.tradingPair,
+                        dateRange: `${new Date(currentConfig.startTime * 1000).toLocaleDateString()} - ${new Date(currentConfig.endTime * 1000).toLocaleDateString()}`
+                      } : undefined}
+                    />
                   </div>
                 )}
 
@@ -225,7 +251,7 @@ export default function MarketDataPage() {
                 {!fetchHistoricalCandlesMutation.isPending && !error && chartData.length === 0 && (
                   <div className="flex items-center justify-center h-96 text-muted-foreground">
                     <div className="text-center">
-                      <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <ChartCandlestick className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium mb-2">No Data Available</p>
                       <p>Configure the parameters and click &ldquo;Load Historical Data&rdquo; to view market data</p>
                     </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccounts, usePortfolioState } from '@/lib/hooks/useAccountsQuery';
+import { useSelectedAccount } from '@/lib/hooks/useSelectedAccount';
 import Link from 'next/link';
 
 interface PortfolioOverviewProps {
@@ -19,9 +20,9 @@ export function PortfolioOverview({
   onDeleteAccount, 
   onViewSettings 
 }: PortfolioOverviewProps) {
+  const selectedAccount = useSelectedAccount();
   const { data: accounts = [], isLoading: loadingAccounts, error: accountsError, refetch: refetchAccounts, isFetching: refreshingAccounts } = useAccounts();
-  const { data: portfolioState, isLoading: loadingPortfolio, error: portfolioError, refetch: refetchPortfolio, isFetching: refreshingPortfolio } = usePortfolioState();
-  // const { data: accountsDistribution, refetch: refetchAccountsDistribution } = useAccountsDistribution();
+  const { data: portfolioState, isLoading: loadingPortfolio, error: portfolioError, refetch: refetchPortfolio, isFetching: refreshingPortfolio } = usePortfolioState([selectedAccount]);
 
   const refreshing = refreshingAccounts || refreshingPortfolio;
 
@@ -29,7 +30,6 @@ export function PortfolioOverview({
     await Promise.all([
       refetchAccounts(),
       refetchPortfolio(),
-      // refetchAccountsDistribution()
     ]);
   };
 
@@ -49,23 +49,31 @@ export function PortfolioOverview({
     if (value === undefined || value === null || isNaN(value)) {
       return '0.00%';
     }
-    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+    return `${value.toFixed(2)}%`;
   };
 
-  const getPercentageColor = (value: number | undefined | null) => {
-    if (value === undefined || value === null || isNaN(value)) {
-      return 'text-gray-600';
+  const getPercentageColor = (percentage: number | undefined | null) => {
+    if (percentage === undefined || percentage === null || isNaN(percentage)) {
+      return 'text-muted-foreground';
     }
-    if (value > 0) return 'text-green-600';
-    if (value < 0) return 'text-red-600';
-    return 'text-gray-600';
+    return percentage >= 0 ? 'text-green-600' : 'text-red-600';
   };
 
   if (accountsError || portfolioError) {
     return (
-      <Alert>
+      <Alert className="mb-4">
         <AlertDescription>
-          {(accountsError || portfolioError)?.message || 'An error occurred while loading data'}
+          Failed to load data. Please check your connection and authentication.
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="ml-2"
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Retry
+          </Button>
         </AlertDescription>
       </Alert>
     );
@@ -73,171 +81,139 @@ export function PortfolioOverview({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Trading overview and portfolio performance
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing || loadingAccounts || loadingPortfolio}
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button
-            size="sm"
-            onClick={onAddAccount}
-          >
-            <Plus className="h-4 w-4" />
-            Add Account
-          </Button>
-        </div>
-      </div>
-
-      {/* Portfolio Summary */}
-      {portfolioState && (
-        <div className="grid gap-4 md:grid-cols-3">
+      {/* Summary Stats for Selected Account */}
+      {!loadingPortfolio && portfolioState && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">Total Balance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(portfolioState?.total_balance)}
+            <CardContent className="px-4 py-1 space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
+              <div className="text-xl font-bold">
+                {formatCurrency(portfolioState.total_balance)}
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">Total PnL</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${getPercentageColor(portfolioState?.total_pnl)}`}>
-                {formatCurrency(portfolioState?.total_pnl)}
+            <CardContent className="px-4 py-1 space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Total P&L</p>
+              <div className={`text-xl font-bold flex items-baseline gap-2 ${getPercentageColor(portfolioState.total_pnl)}`}>
+                <span>{formatCurrency(portfolioState.total_pnl)}</span>
+                <span className="text-sm font-medium">
+                  ({formatPercentage(portfolioState.total_pnl_percentage)})
+                </span>
               </div>
-              <p className={`text-xs ${getPercentageColor(portfolioState?.total_pnl_percentage)}`}>
-                {formatPercentage(portfolioState?.total_pnl_percentage)}
-              </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-semibold">Active Accounts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {Object.keys(portfolioState?.accounts || {}).length}
+            <CardContent className="px-4 py-1 space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Active Connectors</p>
+              <div className="text-xl font-bold">
+                {Object.keys(portfolioState?.accounts?.[selectedAccount]?.connectors || {}).length}
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Accounts List */}
+      {/* Selected Account Details */}
       <Card>
-        <CardHeader>
-          <CardTitle>Accounts</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Account: {selectedAccount}</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Link href={`/accounts/${selectedAccount}`}>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
-          {loadingAccounts ? (
+          {loadingPortfolio ? (
             <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12 rounded-md" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[200px]" />
-                    <Skeleton className="h-4 w-[150px]" />
-                  </div>
-                </div>
-              ))}
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
             </div>
-          ) : accounts.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">No accounts found</p>
-              <Button onClick={onAddAccount}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Account
-              </Button>
-            </div>
-          ) : (
+          ) : portfolioState?.accounts?.[selectedAccount] ? (
             <div className="space-y-4">
-              {accounts.map((accountName) => {
-                const accountData = portfolioState?.accounts[accountName];
-                // const accountDistData = accountsDistribution?.accounts[accountName];
-                
+              {/* Account connectors */}
+              {Object.entries(portfolioState.accounts[selectedAccount].connectors || {}).map(([connectorName, connectorData]) => {
+                const connector = connectorData as any; // Type assertion for now
                 return (
-                  <div key={accountName} className="flex items-center justify-between p-4 border rounded-md">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-12 w-12 bg-primary/10 rounded-md flex items-center justify-center">
-                        <Shield className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">{accountName}</h3>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          {accountData ? (
-                            <>
-                              <span>Balance: {formatCurrency(accountData?.total_balance)}</span>
-                              <span className={getPercentageColor(accountData?.total_pnl_percentage)}>
-                                PnL: {formatPercentage(accountData?.total_pnl_percentage)}
-                              </span>
-                              <span>Connectors: {Object.keys(accountData?.connectors || {}).length}</span>
-                            </>
-                          ) : (
-                            <span>No data available</span>
-                          )}
-                        </div>
-                      </div>
+                  <div key={connectorName} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">{connectorName}</h4>
+                      <span className="text-sm text-muted-foreground">
+                        Balance: {formatCurrency(connector.total_balance)}
+                      </span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {/* accountDistData && accountDistData.percentage != null && (
-                        <Badge variant="secondary">
-                          {accountDistData.percentage.toFixed(1)}% of portfolio
-                        </Badge>
-                      ) */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                      >
-                        <Link href={`/accounts/${accountName}`}>
-                          <Settings className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      {accountName !== 'master' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDeleteAccount(accountName)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    
+                    {/* Tokens for this connector */}
+                    {connector.tokens && Object.keys(connector.tokens).length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {Object.entries(connector.tokens).map(([tokenName, tokenData]) => {
+                          const token = tokenData as any; // Type assertion for now
+                          return (
+                            <div key={tokenName} className="p-3 bg-muted/30 rounded">
+                              <div className="font-medium text-sm">{tokenName}</div>
+                              <div className="text-xs text-muted-foreground space-y-1">
+                                <div>Units: {token.units?.toFixed(6) || '0'}</div>
+                                <div>Price: {formatCurrency(token.price)}</div>
+                                <div>Value: {formatCurrency(token.value)}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No tokens found for this connector</p>
+                    )}
                   </div>
                 );
               })}
+              
+              {Object.keys(portfolioState.accounts[selectedAccount].connectors || {}).length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No connectors configured for this account</p>
+                  <Link href={`/accounts/${selectedAccount}`}>
+                    <Button>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Configure Connectors
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">No data available for account: {selectedAccount}</p>
+              <Link href={`/accounts/${selectedAccount}`}>
+                <Button>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configure Account
+                </Button>
+              </Link>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Sticky Footer with Last Updated */}
+      {/* Last Updated Footer */}
       {portfolioState && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t border-border px-6 py-2 z-10">
-          <div className="flex justify-center items-center">
-            <span className="text-xs text-muted-foreground">
-              Last Updated: {portfolioState.timestamp ? new Date(portfolioState.timestamp).toLocaleString() : 'N/A'}
-            </span>
-          </div>
+        <div className="text-center">
+          <span className="text-xs text-muted-foreground">
+            Last Updated: {portfolioState.timestamp ? new Date(portfolioState.timestamp).toLocaleString() : 'N/A'}
+          </span>
         </div>
       )}
     </div>
