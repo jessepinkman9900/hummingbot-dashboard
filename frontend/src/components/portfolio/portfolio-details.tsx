@@ -141,7 +141,7 @@ export function PortfolioDetails({ accountName, onBack, onViewSettings }: Portfo
               <div className="text-2xl font-bold">
                 {formatCurrency(
                   Object.values(accountData.connectors).reduce(
-                    (sum, connector) => sum + connector.available_balance,
+                    (sum: number, connector: any) => sum + (connector.available_balance || 0),
                     0
                   )
                 )}
@@ -171,7 +171,7 @@ export function PortfolioDetails({ accountName, onBack, onViewSettings }: Portfo
                 <CardTitle>Connector Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.entries(accountData.connectors).map(([connectorName, connector]) => (
+                {Object.entries(accountData.connectors).map(([connectorName, connector]: [string, any]) => (
                   <div key={connectorName} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -208,13 +208,13 @@ export function PortfolioDetails({ accountName, onBack, onViewSettings }: Portfo
                 <CardTitle>Asset Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.entries(accountData.connectors).map(([connectorName, connector]) => (
+                {Object.entries(accountData.connectors).map(([connectorName, connector]: [string, any]) => (
                   <div key={connectorName} className="space-y-3">
                     <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
                       {connectorName}
                     </h4>
                     <div className="grid gap-3">
-                      {Object.entries(connector.balances).map(([tokenName, balance]) => (
+                      {Object.entries(connector.balances).map(([tokenName, balance]: [string, any]) => (
                         <div key={`${connectorName}-${tokenName}`} className="flex items-center justify-between p-3 border rounded-md">
                           <div className="flex items-center space-x-3">
                             <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">

@@ -10,10 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Plug, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface ConnectorsResponse {
-  connectors: string[];
-  total: number;
-}
+// interface ConnectorsResponse {
+//   connectors: string[];
+//   total: number;
+// }
 
 export default function ConnectorsPage() {
   const router = useRouter();

@@ -17,8 +17,8 @@ export default function CredentialTestPage() {
           <h3 className="font-medium mb-2">How to test:</h3>
           <ol className="text-sm space-y-1 list-decimal list-inside">
             <li>Enter username and password above</li>
-            <li>Click "Store Credentials"</li>
-            <li>Click "Retrieve" to see stored credentials</li>
+            <li>Click &quot;Store Credentials&quot;</li>
+            <li>Click &quot;Retrieve&quot; to see stored credentials</li>
             <li>Check browser console for logs</li>
             <li>Test with the health status component</li>
           </ol>

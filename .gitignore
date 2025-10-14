@@ -145,3 +145,4 @@ Thumbs.db
 .env.production.local
 
 deploy/bots/credentials
+dist-npm

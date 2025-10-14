@@ -126,7 +126,7 @@ export default function ApiTestPage() {
           <CardContent>
             <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg max-h-96 overflow-y-auto">
               {logs.length === 0 ? (
-                <p className="text-muted-foreground italic">No logs yet. Click "Run Debug Test" to start testing.</p>
+                <p className="text-muted-foreground italic">No logs yet. Click &quot;Run Debug Test&quot; to start testing.</p>
               ) : (
                 <div className="font-mono text-sm space-y-1">
                   {logs.map((log, index) => (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { PortfolioOverview } from '@/components/portfolio/portfolio-overview';
 import { AddAccountDialog } from '@/components/portfolio/add-account-dialog';
+import { Button } from '@/components/ui/button';
 import { useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
 import { toast } from 'sonner';
 import {
@@ -37,7 +38,7 @@ export default function DashboardPage() {
     setShowDeleteDialog(true);
   };
 
-  const handleViewSettings = (accountName: string) => {
+  const handleViewSettings = (_accountName: string) => {
     // This is now handled by the PortfolioOverview component internally
   };
 
@@ -58,11 +59,11 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <PortfolioOverview
-          onAddAccount={handleAddAccount}
-          onDeleteAccount={handleDeleteAccount}
-          onViewSettings={handleViewSettings}
-        />
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <Button onClick={handleAddAccount}>Add Account</Button>
+        </div>
+        <PortfolioOverview />
 
         <AddAccountDialog 
           open={showAddDialog} 

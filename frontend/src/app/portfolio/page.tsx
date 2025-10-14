@@ -15,6 +15,7 @@ import { useSelectedAccount } from '@/lib/hooks/useSelectedAccount';
 import { useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +31,6 @@ type View = 'overview' | 'settings';
 
 export default function DashboardPage() {
   const globalSelectedAccount = useSelectedAccount();
-  const { selectedAccount, setSelectedAccount } = useAccountsUIStore();
   const deleteAccountMutation = useDeleteAccount();
   
   const [currentView, setCurrentView] = useState<View>('overview');
@@ -120,11 +120,11 @@ export default function DashboardPage() {
             </TabsList>
             
             <TabsContent value="overview" className="space-y-3">
-              <PortfolioOverview
-                onAddAccount={handleAddAccount}
-                onDeleteAccount={handleDeleteAccount}
-                onViewSettings={handleViewSettings}
-              />
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Portfolio Overview</h2>
+                <Button onClick={handleAddAccount}>Add Account</Button>
+              </div>
+              <PortfolioOverview />
             </TabsContent>
             
             <TabsContent value="history" className="space-y-3">

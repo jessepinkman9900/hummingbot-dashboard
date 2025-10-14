@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Activity, ChartCandlestick, Download } from 'lucide-react';
+import { Loader2, AlertCircle, ChartCandlestick, Download } from 'lucide-react';
 import { LightweightChart } from '@/components/charts/lightweight-chart';
 import { HistoricalMarketDataForm, HistoricalMarketDataFormData } from '@/components/forms/historical-market-data-form';
 import { CandleData } from '@/lib/api/market-data';
@@ -25,9 +25,9 @@ function AlertDescription({ children }: { children: React.ReactNode }) {
 }
 
 // Helper function to format Unix timestamp to readable date
-const formatUnixTime = (timestamp: number): string => {
-  return new Date(timestamp * 1000).toLocaleString();
-};
+// const formatUnixTime = (timestamp: number): string => {
+//   return new Date(timestamp * 1000).toLocaleString();
+// };
 
 // Helper function to format price with appropriate decimal places
 const formatPrice = (price: number): string => {
