@@ -1,6 +1,6 @@
 {
-  "name": "hummingbot-dashboard",
-  "version": "0.0.2",
+  "name": "hummingbot-dashboard-v2",
+  "version": "0.5.0",
   "description": "Professional TradingView-style market data visualization dashboard for Hummingbot trading bots",
   "main": "bin/cli.js",
   "bin": {
@@ -25,13 +25,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/hummingbot-dashboard"
+    "url": "https://github.com/jessepinkman9900/hummingbot-dashboard"
   },
   "bugs": {
-    "url": "https://github.com/your-org/hummingbot-dashboard/issues"
+    "url": "https://github.com/jessepinkman9900/hummingbot-dashboard/issues"
   },
-  "homepage": "https://github.com/your-org/hummingbot-dashboard#readme",
-  "author": "Hummingbot Foundation",
+  "homepage": "https://github.com/jessepinkman9900/hummingbot-dashboard#readme",
+  "author": "jessepinkman9900",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0",
