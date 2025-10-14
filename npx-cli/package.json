@@ -1,6 +1,6 @@
 {
   "name": "hummingbot-dashboard-v2",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Professional TradingView-style market data visualization dashboard for Hummingbot trading bots",
   "main": "bin/cli.js",
   "bin": {
