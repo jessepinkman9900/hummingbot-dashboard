@@ -56,179 +56,26 @@ echo -e "\n${YELLOW}📝 Creating package.json...${NC}"
 NPM_CLI_VERSION=$(node -p "require('./npx-cli/package.json').version")
 VERSION="${NPM_VERSION:-$NPM_CLI_VERSION}"
 
-cat > dist-npm/package.json << EOF
-{
-  "name": "hummingbot-dashboard",
-  "version": "${VERSION}",
-  "description": "Professional TradingView-style market data visualization dashboard for Hummingbot trading bots",
-  "main": "bin/cli.js",
-  "bin": {
-    "hummingbot-dashboard": "./bin/cli.js",
-    "hb-dashboard": "./bin/cli.js"
-  },
-  "scripts": {
-    "start": "node bin/cli.js",
-    "postinstall": "node scripts/postinstall.js"
-  },
-  "keywords": [
-    "hummingbot",
-    "trading",
-    "dashboard",
-    "crypto",
-    "cryptocurrency",
-    "market-data",
-    "candlestick-charts",
-    "tradingview",
-    "technical-analysis",
-    "algo-trading"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/hummingbot/dashboard"
-  },
-  "bugs": {
-    "url": "https://github.com/hummingbot/dashboard/issues"
-  },
-  "homepage": "https://github.com/hummingbot/dashboard#readme",
-  "author": "Hummingbot Foundation",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "next": "15.5.4",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "@radix-ui/react-alert-dialog": "^1.1.15",
-    "@radix-ui/react-avatar": "^1.1.10",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-dropdown-menu": "^2.1.16",
-    "@radix-ui/react-label": "^2.1.7",
-    "@radix-ui/react-select": "^2.2.6",
-    "@radix-ui/react-separator": "^1.1.7",
-    "@radix-ui/react-slot": "^1.2.3",
-    "@radix-ui/react-tabs": "^1.1.13",
-    "@radix-ui/react-tooltip": "^1.2.8",
-    "@tanstack/react-query": "^5.90.2",
-    "lightweight-charts": "^5.0.9",
-    "lucide-react": "^0.545.0",
-    "next-themes": "^0.4.6",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.3.1",
-    "recharts": "^2.15.4",
-    "zustand": "^5.0.8"
-  },
-  "files": [
-    "bin/",
-    ".next/",
-    "public/",
-    "src/",
-    "scripts/",
-    "next.config.ts",
-    "README.md"
-  ]
-}
-EOF
+# Copy the base package.json from npx-cli and update specific fields
+cp npx-cli/package.json dist-npm/package.json
+
+# Update version, repository URLs, and add src/ to files array
+node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('dist-npm/package.json', 'utf8'));
+pkg.version = '${VERSION}';
+pkg.repository.url = 'https://github.com/hummingbot/dashboard';
+pkg.bugs.url = 'https://github.com/hummingbot/dashboard/issues';
+pkg.homepage = 'https://github.com/hummingbot/dashboard#readme';
+if (!pkg.files.includes('src/')) pkg.files.push('src/');
+fs.writeFileSync('dist-npm/package.json', JSON.stringify(pkg, null, 2));
+"
 
 echo -e "${GREEN}✅ package.json created${NC}"
 
-# Create a README for npm package
-echo -e "\n${YELLOW}📖 Creating README...${NC}"
-cat > dist-npm/README.md << 'EOF'
-# 🐦 Hummingbot Dashboard
-
-Professional TradingView-style market data visualization dashboard for Hummingbot trading bots.
-
-## Features
-
-- 📊 **TradingView-style Charts**: Interactive candlestick and line charts
-- 🔄 **Real-time Data**: Live market data from multiple connectors
-- 📈 **Technical Analysis**: Comprehensive market statistics and insights
-- 🎨 **Modern UI**: Beautiful, responsive design with dark mode support
-- ⚡ **Fast**: Built with Next.js 15 and React 19
-
-## Quick Start
-
-```bash
-npx hummingbot-dashboard
-```
-
-That's it! The dashboard will start on `http://localhost:3002`
-
-## Requirements
-
-- Node.js >= 18.0.0
-- Hummingbot instance running with API enabled (default: localhost:8000)
-
-## Configuration
-
-### Custom Port
-
-```bash
-npx hummingbot-dashboard --port=4000
-```
-
-### Custom Hummingbot API
-
-```bash
-HUMMINGBOT_API_HOST=192.168.1.100 HUMMINGBOT_API_PORT=9000 npx hummingbot-dashboard
-```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Dashboard port | 3002 |
-| `HUMMINGBOT_API_HOST` | Hummingbot API host | localhost |
-| `HUMMINGBOT_API_PORT` | Hummingbot API port | 8000 |
-
-## Usage
-
-1. **Start Hummingbot** with API enabled
-2. **Run the dashboard**: `npx hummingbot-dashboard`
-3. **Open your browser** to `http://localhost:3002`
-4. **Select a connector** and trading pair
-5. **Analyze market data** with interactive charts
-
-## Features in Detail
-
-### Market Data Page
-- Select from multiple connectors (Binance, Hyperliquid, etc.)
-- Choose trading pairs dynamically
-- View historical candlestick data
-- Interactive chart controls (zoom, pan, crosshair)
-- Real-time statistics and price changes
-
-### Professional Charts
-- TradingView-style candlestick visualization
-- Alternative line chart view
-- Volume data display
-- Price scaling and time navigation
-- Mobile-responsive design
-
-## Troubleshooting
-
-### Cannot connect to Hummingbot API
-Make sure Hummingbot is running and the API is accessible:
-```bash
-curl http://localhost:8000/connectors/
-```
-
-### Port already in use
-Use a different port:
-```bash
-npx hummingbot-dashboard --port=4000
-```
-
-## Documentation
-
-For more information, visit: https://github.com/hummingbot/dashboard
-
-## License
-
-MIT
-EOF
+# Copy README from npx-cli template
+echo -e "\n${YELLOW}📖 Copying README...${NC}"
+cp npx-cli/README.md dist-npm/README.md
 
 echo -e "${GREEN}✅ README created${NC}"
 
