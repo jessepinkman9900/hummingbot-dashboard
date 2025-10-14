@@ -64,9 +64,6 @@ node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('dist-npm/package.json', 'utf8'));
 pkg.version = '${VERSION}';
-pkg.repository.url = 'https://github.com/hummingbot/dashboard';
-pkg.bugs.url = 'https://github.com/hummingbot/dashboard/issues';
-pkg.homepage = 'https://github.com/hummingbot/dashboard#readme';
 if (!pkg.files.includes('src/')) pkg.files.push('src/');
 fs.writeFileSync('dist-npm/package.json', JSON.stringify(pkg, null, 2));
 "
