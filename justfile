@@ -12,3 +12,8 @@ publish:
 npx-pack:
   bash build-npm-package.sh
   cd dist-npm && npm pack
+
+[group('local')]
+run:
+  cd deploy && docker compose up -d
+  cd frontend && pnpm i && pnpm dev
