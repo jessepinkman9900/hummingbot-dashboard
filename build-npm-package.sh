@@ -53,7 +53,8 @@ echo -e "${GREEN}✅ CLI wrapper created${NC}"
 
 # Create package.json for npm with proper version
 echo -e "\n${YELLOW}📝 Creating package.json...${NC}"
-VERSION="${NPM_VERSION:-0.1.0}"
+NPM_CLI_VERSION=$(node -p "require('./npx-cli/package.json').version")
+VERSION="${NPM_VERSION:-$NPM_CLI_VERSION}"
 
 cat > dist-npm/package.json << EOF
 {
