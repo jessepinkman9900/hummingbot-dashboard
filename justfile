@@ -9,8 +9,8 @@ publish:
   bash build-npm-package.sh
   cd dist-npm && pnpm publish --no-git-checks
   git add npx-cli/package.json
-  git commit -m "Bump npx-cli version"
-  git tag -a "v$(node -p "require('./package.json').version")" -m "Release v$(node -p "require('./package.json').version")"
+  git commit -m "Bump npx-cli version to $(node -p "require('./npx-cli/package.json').version")"
+  git tag -a "v$(node -p "require('./npx-cli/package.json').version")" -m "Release v$(node -p "require('./npx-cli/package.json').version")"
   git push origin --tags
 
 [group('npm')]
