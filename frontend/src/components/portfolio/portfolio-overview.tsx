@@ -167,15 +167,6 @@ export function PortfolioOverview() {
           )}
         </CardContent>
       </Card>
-
-      {/* Last Updated Footer */}
-      {portfolioState && (
-        <div className="text-center">
-          <span className="text-xs text-muted-foreground">
-            Last Updated: {portfolioState.timestamp ? new Date(portfolioState.timestamp).toLocaleString() : 'N/A'}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

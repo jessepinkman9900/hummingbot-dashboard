@@ -9,6 +9,7 @@ import { ThemePicker } from '@/components/ui/theme-picker';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { AccountSelector } from '@/components/ui/account-selector';
 import { ReadOnlyToggle } from '@/components/ui/read-only-toggle';
+import { GithubButton } from '@/components/ui/github-button';
 import { useAppStore } from '@/lib/store';
 import { RefreshCw } from 'lucide-react';
 import { useGlobalRefresh } from '@/lib/hooks/useGlobalRefresh';
@@ -66,12 +67,9 @@ export function MainLayout({ children }: MainLayoutProps) {
                   disabled={isRefreshing}
                   className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  {isRefreshing ? 'Refreshing...' : 'Refresh All'}
+                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
-                <span className="text-xs text-muted-foreground">
-                  Last Updated: {new Date().toLocaleTimeString()}
-                </span>
+                <GithubButton />
                 <ReadOnlyToggle />
               </div>
             </div>
