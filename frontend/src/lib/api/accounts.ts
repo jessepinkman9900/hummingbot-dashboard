@@ -124,13 +124,13 @@ export const portfolioApi = {
     try {
       const requestBody: any = {
         limit: filterRequest?.limit || 100,
+        cursor: filterRequest?.cursor || 'string',
         start_time: filterRequest?.startTime
           ? Math.floor(filterRequest.startTime.getTime() / 1000)
-          : 0,
+          : 0,  // Send 0 to get all historical data
         end_time: filterRequest?.endTime
           ? Math.floor(filterRequest.endTime.getTime() / 1000)
-          : 0,
-        cursor: filterRequest?.cursor || 'string',
+          : 0,  // Send 0 to get all historical data
       };
 
       if (filterRequest?.accounts && filterRequest.accounts.length > 0) {
@@ -140,10 +140,22 @@ export const portfolioApi = {
         requestBody.connector_names = filterRequest.connectors;
       }
 
+      console.log('Portfolio History API Request:', {
+        filterRequest,
+        requestBody,
+        url: '/portfolio/history',
+        timestamps: {
+          start_time_readable: requestBody.start_time ? new Date(requestBody.start_time * 1000).toISOString() : 'not set',
+          end_time_readable: requestBody.end_time ? new Date(requestBody.end_time * 1000).toISOString() : 'not set'
+        }
+      });
+
       const response = await apiClient.post<PortfolioHistoryResponse>(
         '/portfolio/history',
         requestBody
       );
+
+      console.log('Portfolio History API Response:', response.data);
       return (
         response.data || {
           data: [],

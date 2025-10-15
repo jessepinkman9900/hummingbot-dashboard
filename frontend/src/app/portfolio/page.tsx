@@ -13,6 +13,7 @@ import { AuthRequiredAlert } from '@/components/auth/auth-required-alert';
 import { useAccountsUIStore } from '@/lib/store/accounts-ui-store';
 import { useSelectedAccount } from '@/lib/hooks/useSelectedAccount';
 import { useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
+import { useAvailableConnectors } from '@/lib/hooks/useConnectorsQuery';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,8 @@ type View = 'overview' | 'settings';
 export default function DashboardPage() {
   const globalSelectedAccount = useSelectedAccount();
   const deleteAccountMutation = useDeleteAccount();
-  
+  const { data: connectors = [] } = useAvailableConnectors();
+
   const [currentView, setCurrentView] = useState<View>('overview');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -133,9 +135,10 @@ export default function DashboardPage() {
             
             <TabsContent value="history" className="space-y-3">
               <div className="grid gap-3">
-                <PortfolioHistoryChart 
+                <PortfolioHistoryChart
                   selectedAccounts={[globalSelectedAccount]}
-                  timeRange={timeRange} 
+                  selectedConnectors={connectors}
+                  timeRange={timeRange}
                   onTimeRangeChange={setTimeRange}
                 />
               </div>

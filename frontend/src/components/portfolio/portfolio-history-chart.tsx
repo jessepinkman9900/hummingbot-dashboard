@@ -5,13 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartConfig
+} from "@/components/ui/chart";
 
-
-import { PortfolioChart } from '@/components/charts/portfolio-chart';
-import { 
-  useAccounts, 
-  usePortfolioHistory, 
-  usePortfolioState 
+import {
+  useAccounts,
+  usePortfolioHistory,
+  usePortfolioState
 } from '@/lib/hooks/useAccountsQuery';
 import { useAvailableConnectors } from '@/lib/hooks/useConnectorsQuery';
 import {
@@ -29,84 +34,113 @@ interface PortfolioHistoryChartProps {
   onTimeRangeChange?: (range: '1d' | '7d' | '30d' | '90d' | '1y') => void;
 }
 
-export function PortfolioHistoryChart({ 
+export function PortfolioHistoryChart({
   selectedAccounts,
   selectedConnectors,
   timeRange = '7d',
   onTimeRangeChange
 }: PortfolioHistoryChartProps) {
+  console.log('🔥 PortfolioHistoryChart RENDERED', { selectedAccounts, selectedConnectors, timeRange });
+
   const { data: accounts = [] } = useAccounts();
   const { data: connectors = [] } = useAvailableConnectors();
+
+  console.log('📊 Accounts and Connectors loaded:', { accounts, connectors });
   
   // Build filter request for portfolio history
   const historyFilters = useMemo(() => {
     const filters: Record<string, unknown> = {
       limit: 100, // Request more data points for better chart resolution
     };
-    
-    // Use all accounts if none selected, otherwise use selected accounts
-    const accountsToUse = selectedAccounts && selectedAccounts.length > 0 
-      ? selectedAccounts 
+
+    // Use selected accounts if provided, otherwise use all accounts
+    const accountsToUse = selectedAccounts && selectedAccounts.length > 0
+      ? selectedAccounts
       : accounts;
-    
-    // Use all connectors if none selected, otherwise use selected connectors  
+
+    // Use selected connectors if provided, otherwise use all connectors
     const connectorsToUse = selectedConnectors && selectedConnectors.length > 0
       ? selectedConnectors
       : connectors;
-    
-    if (accountsToUse.length > 0) {
+
+    // Only add if we have actual values (arrays of strings)
+    if (accountsToUse && accountsToUse.length > 0) {
       filters.accounts = accountsToUse;
     }
-    
-    if (connectorsToUse.length > 0) {
+
+    if (connectorsToUse && connectorsToUse.length > 0) {
       filters.connectors = connectorsToUse;
     }
-    
-    // Add time range filters
-    const endTime = new Date();
-    const startTime = new Date();
-    
-    switch (timeRange) {
-      case '1d':
-        startTime.setDate(endTime.getDate() - 1);
-        break;
-      case '7d':
-        startTime.setDate(endTime.getDate() - 7);
-        break;
-      case '30d':
-        startTime.setDate(endTime.getDate() - 30);
-        break;
-      case '90d':
-        startTime.setDate(endTime.getDate() - 90);
-        break;
-      case '1y':
-        startTime.setFullYear(endTime.getFullYear() - 1);
-        break;
-    }
-    
-    filters.startTime = startTime;
-    filters.endTime = endTime;
-    
+
+    // NOTE: Temporarily setting start_time and end_time to 0 to fetch all historical data
+    // This will be fixed once we confirm data is being returned and parsed correctly
+    // The backend interprets 0 as "no time filter" and returns all available data
+
     return filters;
   }, [selectedAccounts, selectedConnectors, accounts, connectors, timeRange]);
-  
-  const { 
-    data: historyData, 
-    isLoading: loadingHistory, 
+
+  console.log('🎯 History Filters created:', historyFilters);
+
+  const {
+    data: historyData,
+    isLoading: loadingHistory,
     error: historyError
   } = usePortfolioHistory(historyFilters);
-  
+
+  console.log('📈 usePortfolioHistory result:', { historyData, loadingHistory, historyError });
+
   const { data: currentPortfolio } = usePortfolioState(historyFilters.accounts as string[]);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Portfolio History Debug:', {
+      historyFilters,
+      accounts,
+      connectors,
+      selectedAccounts,
+      selectedConnectors,
+      historyData,
+      loadingHistory,
+      historyError
+    });
+  }, [historyFilters, accounts, connectors, selectedAccounts, selectedConnectors, historyData, loadingHistory, historyError]);
   
   // Transform history data for the chart
   const chartData = useMemo(() => {
-    if (!historyData?.chartData) return [];
-    
-    return historyData.chartData.map((item: any) => ({
-      time: new Date(item.timestamp).getTime() / 1000,
-      value: item.totalBalance || 0
+    console.log('🔧 Transforming chartData from historyData:', historyData);
+
+    if (!historyData?.chartData) {
+      console.warn('⚠️ No chartData in historyData:', historyData);
+      return [];
+    }
+
+    const transformed = historyData.chartData.map((item: any) => ({
+      timestamp: new Date(item.timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      value: item.totalBalance || 0,
+      fullTimestamp: new Date(item.timestamp).toLocaleString()
     }));
+
+    console.log('📊 Final chartData for Recharts:', {
+      length: transformed.length,
+      sample: transformed.slice(0, 3),
+      all: transformed
+    });
+
+    return transformed;
   }, [historyData]);
+
+  // Chart configuration for shadcn/ui chart
+  const chartConfig: ChartConfig = {
+    value: {
+      label: "Portfolio Value",
+      color: "hsl(var(--chart-1))",
+    },
+  };
   
   // Calculate performance metrics
   const performanceMetrics = useMemo(() => {
@@ -175,7 +209,25 @@ export function PortfolioHistoryChart({
         <CardContent>
           <Alert>
             <AlertDescription>
-              Failed to load portfolio history. Please try again later.
+              Failed to load portfolio history: {historyError instanceof Error ? historyError.message : 'Unknown error'}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show message if no accounts are available
+  if (!accounts || accounts.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Portfolio History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription>
+              No accounts available. Please add an account to view portfolio history.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -243,33 +295,67 @@ export function PortfolioHistoryChart({
           
           {/* Chart */}
           {chartData.length > 0 ? (
-            <div className="w-full">
-              <PortfolioChart 
-                data={chartData}
-                width={800}
-                height={300}
-                className="w-full"
-              />
-            </div>
+            <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+              <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                <XAxis
+                  dataKey="timestamp"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  className="text-xs"
+                  tickFormatter={(value) => {
+                    // Show abbreviated timestamp
+                    return value.split(',')[0];
+                  }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  className="text-xs"
+                  tickFormatter={(value) => `$${value.toLocaleString()}`}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(value) => value}
+                      formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Portfolio Value']}
+                    />
+                  }
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="hsl(var(--foreground))"
+                  strokeWidth={2.5}
+                  fill="url(#colorValue)"
+                  fillOpacity={1}
+                  dot={false}
+                  activeDot={{ r: 6, strokeWidth: 2, fill: "hsl(var(--foreground))", stroke: "hsl(var(--background))" }}
+                />
+              </AreaChart>
+            </ChartContainer>
           ) : (
-            <div className="flex items-center justify-center h-64 text-muted-foreground">
-              No historical data available for the selected period
+            <div className="flex flex-col items-center justify-center h-64 text-center space-y-3 px-4">
+              <div className="text-lg font-medium text-muted-foreground">
+                No historical data available for the selected period
+              </div>
+              <div className="text-sm text-muted-foreground max-w-md">
+                Portfolio history is recorded automatically by the backend every few minutes.
+                Make sure your Hummingbot instance is running and has active connectors with credentials configured.
+              </div>
+              <div className="text-xs text-muted-foreground/70">
+                Time range: {timeRange} • Accounts: {selectedAccounts?.join(', ') || 'all'} • Connectors: {selectedConnectors?.length || 0} connected
+              </div>
             </div>
           )}
-          
-          {/* Filter Summary */}
-          <div className="text-xs text-muted-foreground">
-            {selectedAccounts && selectedAccounts.length > 0 && (
-              <div>Accounts: {selectedAccounts.join(', ')}</div>
-            )}
-            {selectedConnectors && selectedConnectors.length > 0 && (
-              <div>Connectors: {selectedConnectors.join(', ')}</div>
-            )}
-            {(!selectedAccounts || selectedAccounts.length === 0) && 
-             (!selectedConnectors || selectedConnectors.length === 0) && (
-              <div>Showing data from all accounts and connectors</div>
-            )}
-          </div>
         </div>
       </CardContent>
     </Card>

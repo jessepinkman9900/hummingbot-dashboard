@@ -225,12 +225,25 @@ export function usePortfolioState(accounts?: string[]) {
 }
 
 export function usePortfolioHistory(filters?: any) {
+  console.log('🚀 usePortfolioHistory called with filters:', filters);
+
   return useQuery({
     queryKey: portfolioQueryKeys.history(filters),
     queryFn: async () => {
+      console.log('🔄 usePortfolioHistory queryFn executing with filters:', filters);
       const result = await portfolioApi.getPortfolioHistory(filters);
 
+      console.log('📦 Raw API result (BEFORE any transformation):', {
+        result,
+        hasData: !!result,
+        dataArray: result?.data,
+        dataArrayLength: result?.data?.length,
+        firstItem: result?.data?.[0],
+        pagination: result?.pagination
+      });
+
       if (!result || !result.data) {
+        console.warn('⚠️ No result or no data array from API');
         return {
           data: [],
           chartData: [],
@@ -248,6 +261,8 @@ export function usePortfolioHistory(filters?: any) {
           },
         };
       }
+
+      console.log(`📊 Processing ${result.data.length} data points from API...`);
 
       // Transform the API response data into chart-friendly format
       const chartData = result.data
@@ -275,6 +290,12 @@ export function usePortfolioHistory(filters?: any) {
         .sort(
           (a: any, b: any) => a.timestamp.getTime() - b.timestamp.getTime()
         );
+
+      console.log('✅ Transformed chartData:', {
+        chartDataLength: chartData.length,
+        chartDataSample: chartData.slice(0, 3),
+        allChartData: chartData
+      });
 
       return {
         data: result.data,
