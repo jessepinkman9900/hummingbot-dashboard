@@ -138,7 +138,7 @@ export function PortfolioHistoryChart({
   const chartConfig: ChartConfig = {
     value: {
       label: "Portfolio Value",
-      color: "hsl(var(--chart-1))",
+      color: "var(--chart-1)",
     },
   };
   
@@ -296,20 +296,17 @@ export function PortfolioHistoryChart({
           {/* Chart */}
           {chartData.length > 0 ? (
             <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-              <AreaChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--foreground))" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="hsl(var(--foreground))" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+              <AreaChart 
+                accessibilityLayer
+                data={chartData} 
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey="timestamp"
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  className="text-xs"
                   tickFormatter={(value) => {
                     // Show abbreviated timestamp
                     return value.split(',')[0];
@@ -319,26 +316,26 @@ export function PortfolioHistoryChart({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  className="text-xs"
                   tickFormatter={(value) => `$${value.toLocaleString()}`}
                 />
                 <ChartTooltip
+                  cursor={false}
                   content={
                     <ChartTooltipContent
                       labelFormatter={(value) => value}
                       formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Portfolio Value']}
+                      indicator="dot"
                     />
                   }
                 />
                 <Area
-                  type="monotone"
                   dataKey="value"
-                  stroke="hsl(var(--foreground))"
-                  strokeWidth={2.5}
-                  fill="url(#colorValue)"
-                  fillOpacity={1}
+                  type="monotone"
+                  fill="var(--color-value)"
+                  fillOpacity={0.4}
+                  stroke="var(--color-value)"
+                  strokeWidth={2}
                   dot={false}
-                  activeDot={{ r: 6, strokeWidth: 2, fill: "hsl(var(--foreground))", stroke: "hsl(var(--background))" }}
                 />
               </AreaChart>
             </ChartContainer>
