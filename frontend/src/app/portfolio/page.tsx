@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Plus } from 'lucide-react';
 
 type View = 'overview' | 'settings';
 
@@ -122,7 +123,10 @@ export default function DashboardPage() {
             <TabsContent value="overview" className="space-y-3">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Portfolio Overview</h2>
-                <Button onClick={handleAddAccount}>Add Account</Button>
+                <Button onClick={handleAddAccount}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Account
+                </Button>
               </div>
               <PortfolioOverview />
             </TabsContent>
