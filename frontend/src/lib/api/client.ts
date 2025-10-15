@@ -281,6 +281,19 @@ export class ApiClient {
       retryAttempts = API_CONFIG.retryAttempts,
     } = config;
 
+    // Check read-only mode before making non-GET requests
+    if (typeof window !== 'undefined' && method !== 'GET') {
+      const readOnlyMode = localStorage.getItem('readOnlyMode');
+      if (readOnlyMode === 'true') {
+        console.warn(`[API Client] Blocked ${method} request to ${endpoint} - Read-Only Mode is enabled`);
+        throw new ApiError(
+          'Operation blocked: Read-Only Mode is enabled. Only GET requests are allowed.',
+          403,
+          'READ_ONLY_MODE_ENABLED'
+        );
+      }
+    }
+
     // Properly join base URL and endpoint, avoiding double slashes
     const baseUrl = this.getBaseURL().replace(/\/$/, ''); // Remove trailing slash
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`; // Ensure leading slash

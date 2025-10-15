@@ -147,6 +147,7 @@ interface AppState {
   isInitialized: boolean;
   sidebarOpen: boolean;
   lastUpdated: Date;
+  readOnlyMode: boolean;
   notifications: Array<{
     id: string;
     type: 'info' | 'warning' | 'error' | 'success';
@@ -159,6 +160,8 @@ interface AppActions {
   setInitialized: (initialized: boolean) => void;
   setSidebarOpen: (open: boolean) => void;
   updateTimestamp: () => void;
+  setReadOnlyMode: (enabled: boolean) => void;
+  toggleReadOnlyMode: () => void;
   addNotification: (
     notification: Omit<AppState['notifications'][0], 'id' | 'timestamp'>
   ) => void;
@@ -172,12 +175,15 @@ export const useAppStore = create<AppState & AppActions>()(
     isInitialized: false,
     sidebarOpen: true,
     lastUpdated: new Date(),
+    readOnlyMode: false,
     notifications: [],
 
     // Actions
     setInitialized: (isInitialized) => set({ isInitialized }),
     setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
     updateTimestamp: () => set({ lastUpdated: new Date() }),
+    setReadOnlyMode: (enabled) => set({ readOnlyMode: enabled }),
+    toggleReadOnlyMode: () => set((state) => ({ readOnlyMode: !state.readOnlyMode })),
     addNotification: (notification) =>
       set((state) => ({
         notifications: [
@@ -240,6 +246,14 @@ if (typeof window !== 'undefined') {
     }
   );
 
+  // Persist read-only mode state
+  useAppStore.subscribe(
+    (state) => state.readOnlyMode,
+    (readOnlyMode) => {
+      localStorage.setItem('readOnlyMode', JSON.stringify(readOnlyMode));
+    }
+  );
+
   // Initialize from localStorage
   const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
   if (savedTheme) {
@@ -249,5 +263,10 @@ if (typeof window !== 'undefined') {
   const savedSidebarState = localStorage.getItem('sidebarOpen');
   if (savedSidebarState) {
     useAppStore.getState().setSidebarOpen(JSON.parse(savedSidebarState));
+  }
+
+  const savedReadOnlyMode = localStorage.getItem('readOnlyMode');
+  if (savedReadOnlyMode) {
+    useAppStore.getState().setReadOnlyMode(JSON.parse(savedReadOnlyMode));
   }
 }

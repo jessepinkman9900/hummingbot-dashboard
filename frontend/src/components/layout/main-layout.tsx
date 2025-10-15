@@ -8,6 +8,7 @@ import { HealthStatusButton } from '@/components/system/health-status-button';
 import { ThemePicker } from '@/components/ui/theme-picker';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { AccountSelector } from '@/components/ui/account-selector';
+import { ReadOnlyToggle } from '@/components/ui/read-only-toggle';
 import { useAppStore } from '@/lib/store';
 import { RefreshCw } from 'lucide-react';
 import { useGlobalRefresh } from '@/lib/hooks/useGlobalRefresh';
@@ -71,6 +72,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <span className="text-xs text-muted-foreground">
                   Last Updated: {new Date().toLocaleTimeString()}
                 </span>
+                <ReadOnlyToggle />
               </div>
             </div>
           </footer>
