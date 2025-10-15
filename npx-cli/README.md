@@ -13,7 +13,7 @@ Professional TradingView-style market data visualization dashboard for Hummingbo
 ## Quick Start
 
 ```bash
-npx hummingbot-dashboard-v2
+npx hummingbot-dashboard
 ```
 
 That's it! The dashboard will start on `http://localhost:3002`
@@ -28,13 +28,13 @@ That's it! The dashboard will start on `http://localhost:3002`
 ### Custom Port
 
 ```bash
-npx hummingbot-dashboard-v2 --port=4000
+npx hummingbot-dashboard --port=4000
 ```
 
 ### Custom Hummingbot API
 
 ```bash
-HUMMINGBOT_API_HOST=192.168.1.100 HUMMINGBOT_API_PORT=9000 npx hummingbot-dashboard-v2
+HUMMINGBOT_API_HOST=192.168.1.100 HUMMINGBOT_API_PORT=9000 npx hummingbot-dashboard
 ```
 
 ## Environment Variables
@@ -48,7 +48,7 @@ HUMMINGBOT_API_HOST=192.168.1.100 HUMMINGBOT_API_PORT=9000 npx hummingbot-dashbo
 ## Usage
 
 1. **Start Hummingbot** with API enabled
-2. **Run the dashboard**: `npx hummingbot-dashboard-v2`
+2. **Run the dashboard**: `npx hummingbot-dashboard`
 3. **Open your browser** to `http://localhost:3002`
 4. **Navigate to Market page** for historical data analysis
 5. **Select connector and trading pair** to view interactive charts
@@ -88,7 +88,7 @@ curl http://localhost:8000/connectors/
 ### Port already in use
 Use a different port:
 ```bash
-npx hummingbot-dashboard-v2 --port=4000
+npx hummingbot-dashboard --port=4000
 ```
 
 ### No data showing in charts
