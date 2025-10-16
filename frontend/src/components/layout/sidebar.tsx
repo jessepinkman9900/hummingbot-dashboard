@@ -16,7 +16,6 @@ import {
   BarChart3,
   Bot,
   Users,
-  TestTube,
   Plug,
   Bird,
   ChartCandlestick,
@@ -62,16 +61,6 @@ const navigationItems = [
         title: 'Connectors',
         url: '/connectors',
         icon: Plug,
-      },
-    ],
-  },
-  {
-    title: 'Development',
-    items: [
-      {
-        title: 'API Test',
-        url: '/api-test',
-        icon: TestTube,
       },
     ],
   },
