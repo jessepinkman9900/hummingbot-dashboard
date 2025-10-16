@@ -25,7 +25,13 @@ npx-pack:
 
 [group('local')]
 run:
-  cd deploy && docker compose up -d
+  #!/usr/bin/env bash
+  if [ ! -d "deploy" ]; then \
+    git clone https://github.com/hummingbot/deploy.git; \
+  else \
+    echo "Deploy directory already exists, skipping clone..."; \
+  fi
+  cd deploy && git fetch && git checkout 26911fb0a5a74866ad7fdc849fb6afb944208108 && touch .env && docker compose up -d && cd ..
   cd frontend && pnpm i && pnpm dev
 
 [group('local')]
