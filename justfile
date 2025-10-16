@@ -40,5 +40,5 @@ fe:
 
 [group('vulnerabilities')]
 update-packages:
-  cd frontend && pnpm up -L && cd ..
-  cd npx-cli && pnpm up -L
+  cd frontend && pnpm up -L && pnpm build && cd ..
+  cd npx-cli && pnpm up -L && cd .. && bash build-npm-package.sh
