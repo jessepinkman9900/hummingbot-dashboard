@@ -9,6 +9,7 @@ Professional TradingView-style market data visualization dashboard for Hummingbo
 - 📈 **Technical Analysis**: Comprehensive market statistics and insights
 - 🎨 **Modern UI**: Beautiful, responsive design with dark mode support built on React 19 + Next.js 15
 - ⚡ **Fast**: Optimized with TanStack React Query for efficient data fetching and caching
+- 🔍 **Smart Startup**: Automatic API connectivity check, colorful status messages, and graceful error handling
 
 ## Quick Start
 
@@ -16,7 +17,11 @@ Professional TradingView-style market data visualization dashboard for Hummingbo
 npx hummingbot-dashboard
 ```
 
-That's it! The dashboard will start on `http://localhost:3002`
+The dashboard will:
+- Display a startup banner with version info
+- Check Hummingbot API connectivity
+- Show configuration details
+- Start the server on `http://localhost:3002`
 
 ## Requirements
 
@@ -34,24 +39,41 @@ npx hummingbot-dashboard --port=4000
 ### Custom Hummingbot API
 
 ```bash
-HUMMINGBOT_API_HOST=192.168.1.100 HUMMINGBOT_API_PORT=9000 npx hummingbot-dashboard
+npx hummingbot-dashboard --api-url=http://192.168.1.100:9000
 ```
 
-## Environment Variables
+### More Examples
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Dashboard port | 3002 |
-| `HUMMINGBOT_API_HOST` | Hummingbot API host | localhost |
-| `HUMMINGBOT_API_PORT` | Hummingbot API port | 8000 |
+```bash
+# Show help
+npx hummingbot-dashboard --help
+
+# Custom port
+npx hummingbot-dashboard --port=4000
+
+# Custom API URL
+npx hummingbot-dashboard --api-url=http://localhost:9000
+
+# Custom port and API URL
+npx hummingbot-dashboard --port=4000 --api-url=http://api.example.com:8080
+```
+
+## Command Line Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--port=<number>` | Port to run dashboard | 3002 |
+| `--api-url=<url>` | Hummingbot API URL | http://localhost:8000 |
+| `--help`, `-h` | Show help message | - |
 
 ## Usage
 
-1. **Start Hummingbot** with API enabled
+1. **Start Hummingbot** with API enabled (default: http://localhost:8000)
 2. **Run the dashboard**: `npx hummingbot-dashboard`
-3. **Open your browser** to `http://localhost:3002`
-4. **Navigate to Market page** for historical data analysis
-5. **Select connector and trading pair** to view interactive charts
+3. The dashboard will automatically check API connectivity and start
+4. **Open your browser** to `http://localhost:3002`
+5. **Navigate to Market page** for historical data analysis
+6. **Select connector and trading pair** to view interactive charts
 
 ## Features in Detail
 
@@ -80,10 +102,19 @@ HUMMINGBOT_API_HOST=192.168.1.100 HUMMINGBOT_API_PORT=9000 npx hummingbot-dashbo
 ## Troubleshooting
 
 ### Cannot connect to Hummingbot API
-Make sure Hummingbot is running and the API is accessible:
-```bash
-curl http://localhost:8000/connectors/
-```
+The dashboard automatically checks API connectivity on startup and displays helpful status messages. If you see a connection warning:
+
+1. Make sure Hummingbot is running with API enabled
+2. Verify the API is accessible:
+   ```bash
+   curl http://localhost:8000/connectors/
+   ```
+3. If using a custom API URL:
+   ```bash
+   npx hummingbot-dashboard --api-url=http://your-hummingbot-host:port
+   ```
+
+The dashboard will start regardless, but some features may not work without API access.
 
 ### Port already in use
 Use a different port:
@@ -101,7 +132,3 @@ npx hummingbot-dashboard --port=4000
 For more information and development guides:
 - [GitHub Repository](https://github.com/hummingbot/dashboard)
 - [Hummingbot Documentation](https://docs.hummingbot.org/)
-
-## License
-
-MIT

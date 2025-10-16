@@ -10,9 +10,10 @@ const args = process.argv.slice(2);
 const portArg = args.find((arg) => arg.startsWith("--port="));
 const apiUrlArg = args.find((arg) => arg.startsWith("--api-url="));
 
+// Parse port (default: 3002)
 const PORT = portArg
   ? parseInt(portArg.split("=")[1])
-  : process.env.PORT || 3002;
+  : 3002;
 
 // Parse API URL (default: http://localhost:8000)
 const API_URL = apiUrlArg ? apiUrlArg.split("=")[1] : "http://localhost:8000";
