@@ -79,7 +79,7 @@ echo -e "${GREEN}✅ README created${NC}"
 # Install production dependencies
 echo -e "\n${YELLOW}📦 Installing production dependencies...${NC}"
 cd dist-npm
-npm install --production --silent
+pnpm install --production --silent
 cd ..
 
 echo -e "${GREEN}✅ Dependencies installed${NC}"
