@@ -27,3 +27,7 @@ npx-pack:
 run:
   cd deploy && docker compose up -d
   cd frontend && pnpm i && pnpm dev
+
+[group('local')]
+fe:
+  cd frontend && pnpm i && pnpm dev

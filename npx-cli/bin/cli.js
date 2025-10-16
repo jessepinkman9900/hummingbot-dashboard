@@ -8,11 +8,14 @@ const fs = require("fs");
 // Parse command line arguments
 const args = process.argv.slice(2);
 const portArg = args.find((arg) => arg.startsWith("--port="));
+const apiUrlArg = args.find((arg) => arg.startsWith("--api-url="));
+
 const PORT = portArg
   ? parseInt(portArg.split("=")[1])
   : process.env.PORT || 3002;
-const API_HOST = process.env.HUMMINGBOT_API_HOST || "localhost";
-const API_PORT = process.env.HUMMINGBOT_API_PORT || 8000;
+
+// Parse API URL (default: http://localhost:8000)
+const API_URL = apiUrlArg ? apiUrlArg.split("=")[1] : "http://localhost:8000";
 
 const distDir = path.join(__dirname, "..");
 
@@ -60,16 +63,12 @@ function showHelp() {
     "  --port=<number>              Port to run dashboard (default: 3002)",
     colors.yellow
   );
+  log(
+    "  --api-url=<url>              Hummingbot API URL (default: http://localhost:8000)",
+    colors.yellow
+  );
   log("  --help                       Show this help message\n", colors.yellow);
   log("Environment Variables:");
-  log(
-    "  HUMMINGBOT_API_HOST         Hummingbot API host (default: localhost)",
-    colors.yellow
-  );
-  log(
-    "  HUMMINGBOT_API_PORT         Hummingbot API port (default: 8000)",
-    colors.yellow
-  );
   log(
     "  PORT                        Dashboard port (default: 3002)\n",
     colors.yellow
@@ -77,7 +76,14 @@ function showHelp() {
   log("Examples:");
   log("  npx hummingbot-dashboard", colors.blue);
   log("  npx hummingbot-dashboard --port=4000", colors.blue);
-  log("  HUMMINGBOT_API_PORT=9000 npx hummingbot-dashboard\n", colors.blue);
+  log(
+    "  npx hummingbot-dashboard --api-url=http://localhost:9000",
+    colors.blue
+  );
+  log(
+    "  npx hummingbot-dashboard --port=4000 --api-url=http://api.example.com:8080\n",
+    colors.blue
+  );
 }
 
 // Check if help flag is present
@@ -89,12 +95,9 @@ if (args.includes("--help") || args.includes("-h")) {
 
 function checkHummingbotAPI() {
   return new Promise((resolve) => {
-    const req = http.get(
-      `http://${API_HOST}:${API_PORT}/connectors/`,
-      (res) => {
-        resolve(res.statusCode === 200);
-      }
-    );
+    const req = http.get(`${API_URL}/connectors/`, (res) => {
+      resolve(res.statusCode === 200);
+    });
 
     req.on("error", () => {
       resolve(false);
@@ -112,7 +115,7 @@ async function startDashboard() {
 
   log("📊 Dashboard Configuration:", colors.bright);
   log(`   Dashboard URL: http://localhost:${PORT}`, colors.green);
-  log(`   Hummingbot API: http://${API_HOST}:${API_PORT}\n`, colors.green);
+  log(`   Hummingbot API: ${API_URL}\n`, colors.green);
 
   // Check if Hummingbot API is running
   log("🔍 Checking Hummingbot API connection...", colors.yellow);
@@ -120,10 +123,7 @@ async function startDashboard() {
 
   if (!apiAvailable) {
     log("⚠️  Warning: Cannot connect to Hummingbot API", colors.yellow);
-    log(
-      `   Make sure Hummingbot is running on http://${API_HOST}:${API_PORT}`,
-      colors.yellow
-    );
+    log(`   Make sure Hummingbot is running on ${API_URL}`, colors.yellow);
     log(
       "   Dashboard will start anyway, but features may not work.\n",
       colors.yellow
@@ -156,8 +156,7 @@ async function startDashboard() {
     env: {
       ...process.env,
       NODE_ENV: "production",
-      NEXT_PUBLIC_API_HOST: API_HOST,
-      NEXT_PUBLIC_API_PORT: API_PORT,
+      NEXT_PUBLIC_API_BASE_URL: API_URL,
     },
   });
 
