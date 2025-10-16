@@ -37,3 +37,8 @@ run:
 [group('local')]
 fe:
   cd frontend && pnpm i && pnpm dev
+
+[group('vulnerabilities')]
+update-packages:
+  cd frontend && pnpm up -L && cd ..
+  cd npx-cli && pnpm up -L
