@@ -4,19 +4,19 @@ import { useState } from 'react';
 
 // This is the main dashboard page showing portfolio overview
 import { MainLayout } from '@/components/layout/main-layout';
-import { PortfolioOverview } from '@/components/portfolio/portfolio-overview';
 import { AccountSettings } from '@/components/portfolio/account-settings';
 import { AddAccountDialog } from '@/components/portfolio/add-account-dialog';
 import { PortfolioHistoryChart } from '@/components/portfolio/portfolio-history-chart';
 import { PortfolioDistribution } from '@/components/portfolio/portfolio-distribution';
 import { AuthRequiredAlert } from '@/components/auth/auth-required-alert';
-import { useAccountsUIStore } from '@/lib/store/accounts-ui-store';
 import { useSelectedAccount } from '@/lib/hooks/useSelectedAccount';
-import { useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
+import { useDeleteAccount, useAccounts, usePortfolioState } from '@/lib/hooks/useAccountsQuery';
 import { useAvailableConnectors } from '@/lib/hooks/useConnectorsQuery';
 import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,22 +27,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus } from 'lucide-react';
+import { Plus, Settings, Wallet, Building2 } from 'lucide-react';
+import Link from 'next/link';
 
 type View = 'overview' | 'settings';
 
 export default function DashboardPage() {
-  const globalSelectedAccount = useSelectedAccount();
-  const deleteAccountMutation = useDeleteAccount();
+  const selectedAccount = useSelectedAccount();
+  const { data: accounts = [] } = useAccounts();
+  const { data: portfolioState, isLoading: loadingPortfolio, error: portfolioError } = usePortfolioState([selectedAccount]);
   const { data: connectors = [] } = useAvailableConnectors();
+  const deleteAccountMutation = useDeleteAccount();
 
   const [currentView, setCurrentView] = useState<View>('overview');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
   const [accountBeingConfigured, setAccountBeingConfigured] = useState<string | null>(null);
-
   const [timeRange, setTimeRange] = useState<'1d' | '7d' | '30d' | '90d' | '1y'>('7d');
+
+  const formatCurrency = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '$0.00';
+    }
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
+
+  const formatPercentage = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '0.00%';
+    }
+    return `${value.toFixed(2)}%`;
+  };
+
+  const getPercentageColor = (percentage: number | undefined | null) => {
+    if (percentage === undefined || percentage === null || isNaN(percentage)) {
+      return 'text-muted-foreground';
+    }
+    return percentage >= 0 ? 'text-green-600' : 'text-red-600';
+  };
 
   const handleConfigureAuth = () => {
     // Navigate to auth configuration if needed
@@ -90,69 +118,202 @@ export default function DashboardPage() {
     setAccountBeingConfigured(null);
   };
 
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'settings':
-        if (!accountBeingConfigured) {
-          setCurrentView('overview');
-          return null;
-        }
-        return (
+  if (currentView === 'settings' && accountBeingConfigured) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto py-4">
           <AccountSettings
             accountName={accountBeingConfigured}
             onBack={handleBackToOverview}
           />
-        );
-        
-      default:
-        return null;
-    }
-  };
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (portfolioError) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto py-4">
+          <AuthRequiredAlert onConfigureClick={handleConfigureAuth} />
+          <Alert className="mb-4">
+            <AlertDescription>
+              Failed to load portfolio data. Please check your connection and authentication.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-4">
+      <div className="container mx-auto py-4 space-y-6">
         <AuthRequiredAlert onConfigureClick={handleConfigureAuth} />
         
-        {currentView === 'overview' ? (
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview">Dashboard</TabsTrigger>
-              <TabsTrigger value="history">Performance</TabsTrigger>
-              <TabsTrigger value="distribution">Assets</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="space-y-3">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Portfolio Overview</h2>
-                <Button onClick={handleAddAccount}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Account
-                </Button>
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Portfolio</h1>
+          <Button onClick={handleAddAccount}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Account
+          </Button>
+        </div>
+
+        {/* Layer 1 - Total Balance, Total PNL, Active Connectors */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {loadingPortfolio ? (
+            <>
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </>
+          ) : (
+            <>
+              <Card>
+                <CardContent className="px-4 py-4 space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Total Balance</p>
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(portfolioState?.total_balance)}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="px-4 py-4 space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Total P&L</p>
+                  <div className={`text-2xl font-bold flex items-baseline gap-2 ${getPercentageColor(portfolioState?.total_pnl)}`}>
+                    <span>{formatCurrency(portfolioState?.total_pnl)}</span>
+                    <span className="text-sm font-medium">
+                      ({formatPercentage(portfolioState?.total_pnl_percentage)})
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="px-4 py-4 space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Active Connectors</p>
+                  <div className="text-2xl font-bold">
+                    {Object.keys(portfolioState?.accounts?.[selectedAccount]?.connectors || {}).length}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+
+        {/* Layer 2 - Portfolio Historical Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Portfolio Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PortfolioHistoryChart
+              selectedAccounts={[selectedAccount]}
+              selectedConnectors={connectors}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Layer 3 - Asset Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PortfolioDistribution selectedAccounts={[selectedAccount]} />
+          </CardContent>
+        </Card>
+
+        {/* Layer 4 - Accounts Connectors */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Account Connectors: {selectedAccount}</CardTitle>
+            <Link href={`/accounts/${selectedAccount}`}>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {loadingPortfolio ? (
+              <div className="space-y-4">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
               </div>
-              <PortfolioOverview />
-            </TabsContent>
-            
-            <TabsContent value="history" className="space-y-3">
-              <div className="grid gap-3">
-                <PortfolioHistoryChart
-                  selectedAccounts={[globalSelectedAccount]}
-                  selectedConnectors={connectors}
-                  timeRange={timeRange}
-                  onTimeRangeChange={setTimeRange}
-                />
+            ) : portfolioState?.accounts?.[selectedAccount] ? (
+              <div className="space-y-4">
+                {/* Account connectors */}
+                {Object.entries(portfolioState.accounts[selectedAccount].connectors || {}).map(([connectorName, connectorData]) => {
+                  const connector = connectorData as any;
+                  return (
+                    <div key={connectorName} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          <h4 className="font-medium">{connectorName}</h4>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          Balance: {formatCurrency(connector.total_balance)}
+                        </span>
+                      </div>
+                      
+                      {/* Tokens for this connector */}
+                      {connector.tokens && Object.keys(connector.tokens).length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {Object.entries(connector.tokens).map(([tokenName, tokenData]) => {
+                            const token = tokenData as any;
+                            return (
+                              <div key={tokenName} className="p-3 bg-muted/30 rounded flex items-start gap-3">
+                                <Wallet className="h-4 w-4 mt-1 text-muted-foreground" />
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm">{tokenName}</div>
+                                  <div className="text-xs text-muted-foreground space-y-1">
+                                    <div>Units: {token.units?.toFixed(6) || '0'}</div>
+                                    <div>Price: {formatCurrency(token.price)}</div>
+                                    <div>Value: {formatCurrency(token.value)}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No tokens found for this connector</p>
+                      )}
+                    </div>
+                  );
+                })}
+                
+                {Object.keys(portfolioState.accounts[selectedAccount].connectors || {}).length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No connectors configured for this account</p>
+                    <Link href={`/accounts/${selectedAccount}`}>
+                      <Button>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Configure Connectors
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
-            </TabsContent>
-            
-            <TabsContent value="distribution" className="space-y-3">
-              <div className="grid gap-3">
-                <PortfolioDistribution selectedAccounts={[globalSelectedAccount]} />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No data available for account: {selectedAccount}</p>
+                <Link href={`/accounts/${selectedAccount}`}>
+                  <Button>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configure Account
+                  </Button>
+                </Link>
               </div>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          renderCurrentView()
-        )}
+            )}
+          </CardContent>
+        </Card>
         
         <AddAccountDialog 
           open={showAddDialog} 
