@@ -5,7 +5,7 @@
   "main": "bin/cli.js",
   "bin": {
     "hummingbot-dashboard": "./bin/cli.js",
-    "hb-dashboard": "./bin/cli.js"
+    "hbdash": "./bin/cli.js"
   },
   "scripts": {
     "start": "node bin/cli.js",
