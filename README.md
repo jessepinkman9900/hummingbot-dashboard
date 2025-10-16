@@ -3,8 +3,8 @@
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](https://github.com/jessepinkman9900/hummingbot-dashboard/blob/main/LICENSE)
 [![npm version](https://img.shields.io/npm/v/hummingbot-dashboard.svg)](https://www.npmjs.com/package/hummingbot-dashboard)
 [![npm downloads](https://img.shields.io/npm/dt/hummingbot-dashboard.svg)](https://www.npmjs.com/package/hummingbot-dashboard)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/jessepinkman9900/hummingbot-dashboard/build-package.yml?branch=main)](https://github.com/jessepinkman9900/hummingbot-dashboard/actions/workflows/build-package.yml)
-[![Minified Size](https://img.shields.io/bundlephobia/min/hummingbot-dashboard)](https://bundlephobia.com/package/hummingbot-dashboard)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/jessepinkman9900/hummingbot-dashboard/ci.yml?branch=main)](https://github.com/jessepinkman9900/hummingbot-dashboard/actions/workflows/ci.yml)
+<!-- [![Minified Size](https://img.shields.io/bundlephobia/min/hummingbot-dashboard)](https://bundlephobia.com/package/hummingbot-dashboard) -->
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jessepinkman9900/hummingbot-dashboard/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jessepinkman9900/hummingbot-dashboard)
 
 
