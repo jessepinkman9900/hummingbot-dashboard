@@ -234,18 +234,6 @@ export default function AccountDetailsPage() {
           </CardContent>
         </Card>
 
-        {/* Raw API Response Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Raw API Response</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto">
-              {JSON.stringify({ credentials: credentials || [] }, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-        
         {/* Add Credential Dialog */}
         <AddCredentialDialog 
           accountName={accountName}
