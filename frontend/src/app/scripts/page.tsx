@@ -1,0 +1,241 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { MainLayout } from '@/components/layout/main-layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Search, FileCode, ChevronRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { scriptsApi } from '@/lib/api/scripts';
+
+export default function ScriptsPage() {
+  const router = useRouter();
+  const [scripts, setScripts] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  // Fetch scripts
+  useEffect(() => {
+    const fetchScripts = async () => {
+      try {
+        setLoading(true);
+        const response = await scriptsApi.listScripts();
+        setScripts(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error('Error fetching scripts:', err);
+        if (err instanceof Error && err.message.includes('401')) {
+          setError('Authentication required. Please configure your API credentials in the system settings.');
+        } else {
+          setError(err instanceof Error ? err.message : 'An error occurred');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchScripts();
+  }, []);
+
+  // Filter scripts based on search term (fuzzy search) and sort alphabetically
+  const filteredScripts = useMemo(() => {
+    let filtered = scripts;
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = scripts.filter((script) => {
+        const scriptLower = script.toLowerCase();
+
+        // Simple fuzzy search: check if all characters of search term exist in order
+        let searchIndex = 0;
+        for (let i = 0; i < scriptLower.length && searchIndex < searchLower.length; i++) {
+          if (scriptLower[i] === searchLower[searchIndex]) {
+            searchIndex++;
+          }
+        }
+
+        return searchIndex === searchLower.length || scriptLower.includes(searchLower);
+      });
+    }
+
+    // Sort alphabetically
+    return filtered.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  }, [scripts, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredScripts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedScripts = filteredScripts.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handleScriptClick = (scriptName: string) => {
+    router.push(`/scripts/${scriptName}`);
+  };
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex items-center space-x-2">
+            <FileCode className="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Scripts</h1>
+              <p className="text-muted-foreground">
+                Explore available bot scripts and their configurations
+              </p>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-4 w-48" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-10 w-full mb-6" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="h-20" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex items-center space-x-2">
+            <FileCode className="h-8 w-8" />
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Scripts</h1>
+              <p className="text-muted-foreground">
+                Explore available bot scripts and their configurations
+              </p>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="text-red-500">
+                  <FileCode className="mx-auto h-12 w-12 mb-2" />
+                  <h2 className="text-xl font-semibold">Failed to load scripts</h2>
+                  <p className="text-muted-foreground">{error}</p>
+                </div>
+                <Button onClick={() => window.location.reload()}>
+                  Try Again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center space-x-2">
+          <FileCode className="h-8 w-8" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Scripts</h1>
+            <p className="text-muted-foreground">
+              Explore available bot scripts and their configurations
+            </p>
+          </div>
+        </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileCode className="h-5 w-5" />
+            Available Scripts
+            <Badge variant="secondary">{filteredScripts.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search scripts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Scripts Grid */}
+          {paginatedScripts.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {searchTerm ? 'No scripts match your search.' : 'No scripts available.'}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {paginatedScripts.map((script) => (
+                <Card
+                  key={script}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleScriptClick(script)}
+                >
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileCode className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium truncate">{script}</h3>
+                        <p className="text-sm text-muted-foreground truncate">
+                          Bot Script
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 pt-1">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center px-4 py-2 text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      </div>
+    </MainLayout>
+  );
+}

@@ -19,6 +19,8 @@ import {
   Plug,
   Bird,
   ChartCandlestick,
+  Settings,
+  FileCode,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -61,6 +63,16 @@ const navigationItems = [
         title: 'Connectors',
         url: '/connectors',
         icon: Plug,
+      },
+      {
+        title: 'Controllers',
+        url: '/controllers',
+        icon: Settings,
+      },
+      {
+        title: 'Scripts',
+        url: '/scripts',
+        icon: FileCode,
       },
     ],
   },

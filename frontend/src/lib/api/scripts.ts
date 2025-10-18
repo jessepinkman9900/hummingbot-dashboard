@@ -10,6 +10,16 @@ export interface ScriptCreateUpdateRequest {
   content: string;
 }
 
+export interface ScriptConfigField {
+  default: any;
+  type: string;
+  required: boolean;
+}
+
+export interface ScriptConfigTemplate {
+  [key: string]: ScriptConfigField;
+}
+
 /**
  * Scripts API functions for managing bot scripts
  */
@@ -46,5 +56,14 @@ export const scriptsApi = {
    */
   async deleteScript(scriptName: string): Promise<ApiResponse<any>> {
     return apiClient.delete<any>(`/scripts/${encodeURIComponent(scriptName)}`);
+  },
+
+  /**
+   * Get configuration template for a script
+   */
+  async getScriptConfigTemplate(scriptName: string): Promise<ApiResponse<ScriptConfigTemplate>> {
+    return apiClient.get<ScriptConfigTemplate>(
+      `/scripts/${encodeURIComponent(scriptName)}/config/template`
+    );
   },
 };
