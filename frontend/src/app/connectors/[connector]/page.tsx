@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Settings, TrendingUp, Plug, Key, DollarSign } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, Settings, TrendingUp, Plug, Key, DollarSign, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -41,6 +42,9 @@ export default function ConnectorDetailPage() {
   const [loadingRules, setLoadingRules] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const [rulesError, setRulesError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Fetch both config map and trading rules simultaneously when page loads
   useEffect(() => {
@@ -122,7 +126,40 @@ export default function ConnectorDetailPage() {
     return value.toString();
   };
 
-  const tradingPairs = Object.keys(tradingRules);
+  // Filter and sort trading pairs based on search term
+  const filteredTradingPairs = useMemo(() => {
+    let pairs = Object.keys(tradingRules);
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      pairs = pairs.filter((pair) => {
+        const pairLower = pair.toLowerCase();
+
+        // Simple fuzzy search: check if all characters of search term exist in order
+        let searchIndex = 0;
+        for (let i = 0; i < pairLower.length && searchIndex < searchLower.length; i++) {
+          if (pairLower[i] === searchLower[searchIndex]) {
+            searchIndex++;
+          }
+        }
+
+        return searchIndex === searchLower.length || pairLower.includes(searchLower);
+      });
+    }
+
+    // Sort alphabetically
+    return pairs.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  }, [tradingRules, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredTradingPairs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedTradingPairs = filteredTradingPairs.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   return (
     <MainLayout>
@@ -219,10 +256,10 @@ export default function ConnectorDetailPage() {
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
                 Trading Rules
-                <Badge variant="secondary">{tradingPairs.length} pairs</Badge>
+                <Badge variant="secondary">{filteredTradingPairs.length} pairs</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               {loadingRules ? (
                 <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -244,81 +281,125 @@ export default function ConnectorDetailPage() {
                 <Alert variant="destructive">
                   <AlertDescription>{rulesError}</AlertDescription>
                 </Alert>
-              ) : tradingPairs.length === 0 ? (
+              ) : Object.keys(tradingRules).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No trading rules available
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {tradingPairs.map((pair) => {
-                    const rules = tradingRules[pair];
-                    return (
-                      <Card key={pair}>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <DollarSign className="h-5 w-5" />
-                            {pair}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground">Order Size</h4>
-                              <div className="text-sm space-y-1">
-                                <div>Min: <span className="font-mono">{formatNumber(rules.min_order_size)}</span></div>
-                                <div>Max: <span className="font-mono">{formatNumber(rules.max_order_size)}</span></div>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground">Price Increment</h4>
-                              <div className="text-sm space-y-1">
-                                <div>Min: <span className="font-mono">{rules.min_price_increment}</span></div>
-                                <div>Digits: <span className="font-mono">{rules.max_price_significant_digits}</span></div>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground">Amount Increment</h4>
-                              <div className="text-sm space-y-1">
-                                <div>Base: <span className="font-mono">{formatNumber(rules.min_base_amount_increment)}</span></div>
-                                <div>Quote: <span className="font-mono">{formatNumber(rules.min_quote_amount_increment)}</span></div>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground">Order Value</h4>
-                              <div className="text-sm space-y-1">
-                                <div>Min Notional: <span className="font-mono">{formatNumber(rules.min_notional_size)}</span></div>
-                                <div>Min Value: <span className="font-mono">{formatNumber(rules.min_order_value)}</span></div>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground">Order Types</h4>
-                              <div className="space-y-1">
-                                <Badge variant={rules.supports_limit_orders ? "default" : "secondary"}>
-                                  Limit Orders
-                                </Badge>
-                                <Badge variant={rules.supports_market_orders ? "default" : "secondary"}>
-                                  Market Orders
-                                </Badge>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-sm text-muted-foreground">Collateral</h4>
-                              <div className="text-sm space-y-1">
-                                <div>Buy: <span className="font-mono">{rules.buy_order_collateral_token}</span></div>
-                                <div>Sell: <span className="font-mono">{rules.sell_order_collateral_token}</span></div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+                <>
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search trading pairs..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {filteredTradingPairs.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {searchTerm ? 'No trading pairs match your search.' : 'No trading pairs available.'}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-6">
+                        {paginatedTradingPairs.map((pair) => {
+                          const rules = tradingRules[pair];
+                          return (
+                            <Card key={pair}>
+                              <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                  <DollarSign className="h-5 w-5" />
+                                  {pair}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-muted-foreground">Order Size</h4>
+                                    <div className="text-sm space-y-1">
+                                      <div>Min: <span className="font-mono">{formatNumber(rules.min_order_size)}</span></div>
+                                      <div>Max: <span className="font-mono">{formatNumber(rules.max_order_size)}</span></div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-muted-foreground">Price Increment</h4>
+                                    <div className="text-sm space-y-1">
+                                      <div>Min: <span className="font-mono">{rules.min_price_increment}</span></div>
+                                      <div>Digits: <span className="font-mono">{rules.max_price_significant_digits}</span></div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-muted-foreground">Amount Increment</h4>
+                                    <div className="text-sm space-y-1">
+                                      <div>Base: <span className="font-mono">{formatNumber(rules.min_base_amount_increment)}</span></div>
+                                      <div>Quote: <span className="font-mono">{formatNumber(rules.min_quote_amount_increment)}</span></div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-muted-foreground">Order Value</h4>
+                                    <div className="text-sm space-y-1">
+                                      <div>Min Notional: <span className="font-mono">{formatNumber(rules.min_notional_size)}</span></div>
+                                      <div>Min Value: <span className="font-mono">{formatNumber(rules.min_order_value)}</span></div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-muted-foreground">Order Types</h4>
+                                    <div className="space-y-1">
+                                      <Badge variant={rules.supports_limit_orders ? "default" : "secondary"}>
+                                        Limit Orders
+                                      </Badge>
+                                      <Badge variant={rules.supports_market_orders ? "default" : "secondary"}>
+                                        Market Orders
+                                      </Badge>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <h4 className="font-medium text-sm text-muted-foreground">Collateral</h4>
+                                    <div className="text-sm space-y-1">
+                                      <div>Buy: <span className="font-mono">{rules.buy_order_collateral_token}</span></div>
+                                      <div>Sell: <span className="font-mono">{rules.sell_order_collateral_token}</span></div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex justify-center gap-2 pt-1">
+                          <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="flex items-center px-4 py-2 text-sm text-muted-foreground">
+                            Page {currentPage} of {totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
