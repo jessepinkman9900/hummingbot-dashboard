@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Settings, Code, FileText } from 'lucide-react';
+import { ArrowLeft, SlidersHorizontal, Code, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CodeEditor } from '@/components/ui/code-editor';
 import {
   getControllerConfigTemplate,
   getControllerCode,
@@ -109,7 +110,7 @@ export default function ControllerDetailPage() {
           </Button>
           <div className="space-y-1">
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Settings className="h-8 w-8" />
+              <SlidersHorizontal className="h-8 w-8" />
               {controllerName}
             </h1>
             <p className="text-muted-foreground">
@@ -236,11 +237,12 @@ export default function ControllerDetailPage() {
                       </div>
                       <Badge variant="outline">Python</Badge>
                     </div>
-                    <div className="relative">
-                      <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-sm">
-                        <code>{controllerCode.content}</code>
-                      </pre>
-                    </div>
+                    <CodeEditor
+                      value={controllerCode.content}
+                      language="python"
+                      height="600px"
+                      readOnly={true}
+                    />
                   </div>
                 )}
               </CardContent>

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, FileCode, Code, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CodeEditor } from '@/components/ui/code-editor';
 import {
   scriptsApi,
   Script,
@@ -225,11 +226,12 @@ export default function ScriptDetailPage() {
                       </div>
                       <Badge variant="outline">Python</Badge>
                     </div>
-                    <div className="relative">
-                      <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-sm">
-                        <code>{scriptCode.content}</code>
-                      </pre>
-                    </div>
+                    <CodeEditor
+                      value={scriptCode.content}
+                      language="python"
+                      height="600px"
+                      readOnly={true}
+                    />
                   </div>
                 )}
               </CardContent>

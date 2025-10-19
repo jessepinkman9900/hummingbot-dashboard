@@ -1,32 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Settings, Trash2, Users, ChevronRight } from 'lucide-react';
-import { useAccounts, useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
+import { Plus, Users, ChevronRight, Search } from 'lucide-react';
+import { useAccounts } from '@/lib/hooks/useAccountsQuery';
 import { AddAccountDialog } from '@/components/portfolio/add-account-dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
 
 export default function AccountsPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const accountsPerPage = 20;
 
@@ -36,40 +25,46 @@ export default function AccountsPage() {
     error 
   } = useAccounts();
 
-  const deleteAccountMutation = useDeleteAccount();
-
   const handleAddAccount = () => {
     setShowAddDialog(true);
   };
 
-  const handleDeleteAccount = (accountName: string) => {
-    if (accountName === 'master') {
-      toast.error('Cannot delete the master account');
-      return;
+
+
+  // Filter accounts based on search term (fuzzy search) and sort alphabetically
+  const filteredAccounts = useMemo(() => {
+    let filtered = accounts;
+
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = accounts.filter((account) => {
+        const accountLower = account.toLowerCase();
+
+        // Simple fuzzy search: check if all characters of search term exist in order
+        let searchIndex = 0;
+        for (let i = 0; i < accountLower.length && searchIndex < searchLower.length; i++) {
+          if (accountLower[i] === searchLower[searchIndex]) {
+            searchIndex++;
+          }
+        }
+
+        return searchIndex === searchLower.length || accountLower.includes(searchLower);
+      });
     }
-    setAccountToDelete(accountName);
-    setShowDeleteDialog(true);
-  };
 
-  const confirmDeleteAccount = async () => {
-    if (!accountToDelete) return;
-    
-    try {
-      await deleteAccountMutation.mutateAsync(accountToDelete);
-      setShowDeleteDialog(false);
-      setAccountToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete account:', error);
-    }
-  };
+    // Sort alphabetically
+    return filtered.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  }, [accounts, searchTerm]);
 
-
-
-  // Pagination logic
-  const sortedAccounts = [...accounts].sort((a, b) => a.localeCompare(b));
-  const totalPages = Math.ceil(sortedAccounts.length / accountsPerPage);
+  // Pagination
+  const totalPages = Math.ceil(filteredAccounts.length / accountsPerPage);
   const startIndex = (currentPage - 1) * accountsPerPage;
-  const paginatedAccounts = sortedAccounts.slice(startIndex, startIndex + accountsPerPage);
+  const paginatedAccounts = filteredAccounts.slice(startIndex, startIndex + accountsPerPage);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (error) {
     return (
@@ -113,76 +108,65 @@ export default function AccountsPage() {
               All Accounts
               {!isLoading && (
                 <Badge variant="secondary">
-                  {accounts.length}
+                  {filteredAccounts.length}
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search accounts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
             {isLoading ? (
               <div className="space-y-1">
                 {[...Array(8)].map((_, i) => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
-            ) : accounts.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4 text-lg">No accounts found</p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Create your first account to get started with Hummingbot
-                </p>
-                <Button onClick={handleAddAccount} size="lg">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Account
-                </Button>
+            ) : paginatedAccounts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {searchTerm ? (
+                  <>No accounts match your search.</>
+                ) : accounts.length === 0 ? (
+                  <div className="space-y-4">
+                    <Users className="h-16 w-16 text-muted-foreground mx-auto" />
+                    <p className="text-lg">No accounts found</p>
+                    <p className="text-sm">
+                      Create your first account to get started with Hummingbot
+                    </p>
+                    <Button onClick={handleAddAccount} size="lg">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Account
+                    </Button>
+                  </div>
+                ) : (
+                  <>No accounts available.</>
+                )}
               </div>
             ) : (
               <div className="space-y-1">
                 {paginatedAccounts.map((accountName) => (
-                  <div
+                  <Link
                     key={accountName}
+                    href={`/accounts/${accountName}`}
                     className="flex items-center justify-between p-3 rounded-md hover:bg-accent cursor-pointer transition-colors group"
                   >
-                    <Link
-                      href={`/accounts/${accountName}`}
-                      className="flex items-center gap-3 flex-1 min-w-0"
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="font-medium truncate">{accountName}</span>
-                        {accountName === 'master' && (
-                          <span className="text-sm text-muted-foreground">• Default Account</span>
-                        )}
-                      </div>
-                    </Link>
-
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toast.info(`Settings for ${accountName} - Feature coming soon!`);
-                        }}
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                      {accountName !== 'master' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteAccount(accountName);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="font-medium truncate">{accountName}</span>
+                      {accountName === 'master' && (
+                        <span className="text-sm text-muted-foreground">• Default Account</span>
                       )}
-                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
                 ))}
               </div>
             )}
@@ -214,31 +198,10 @@ export default function AccountsPage() {
       </div>
 
       {/* Add Account Dialog */}
-      <AddAccountDialog 
-        open={showAddDialog} 
-        onOpenChange={setShowAddDialog} 
+      <AddAccountDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
       />
-      
-      {/* Delete Account Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the account
-              &ldquo;{accountToDelete}&rdquo; and remove all associated credentials.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteAccount}>
-              Delete Account
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </MainLayout>
   );
 }
