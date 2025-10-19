@@ -14,6 +14,7 @@ import { useAppStore } from '@/lib/store';
 import { RefreshCw } from 'lucide-react';
 import { useGlobalRefresh } from '@/lib/hooks/useGlobalRefresh';
 import { Button } from '@/components/ui/button';
+import packageJson from '../../../package.json';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -57,7 +58,15 @@ export function MainLayout({ children }: MainLayoutProps) {
           <footer className="border-t border-border bg-card px-2 py-1 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="text-xs text-muted-foreground">
-                Hummingbot Dashboard
+                Hummingbot Dashboard{' '}
+                <a
+                  href="https://www.npmjs.com/package/hummingbot-dashboard"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground underline"
+                >
+                  v{packageJson.version}
+                </a>
               </div>
               <div className="flex items-center space-x-2">
                 <Button
