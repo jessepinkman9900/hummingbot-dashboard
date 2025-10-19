@@ -122,39 +122,39 @@ export default function AccountDetailsPage() {
     <MainLayout>
       <div className="container mx-auto py-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Key className="h-8 w-8" />
-                {accountName}
-              </h1>
-              <p className="text-muted-foreground">
-                Manage credentials and connector configurations for this account
-              </p>
-            </div>
-          </div>
-          <Button onClick={handleAddCredential}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Credential
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Key className="h-8 w-8" />
+              {accountName}
+            </h1>
+            <p className="text-muted-foreground">
+              Manage credentials and connector configurations for this account
+            </p>
+          </div>
         </div>
 
         {/* Credentials List */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              Credentials
-              {!isLoading && (
-                <Badge variant="secondary">
-                  {filteredCredentials.length}
-                </Badge>
-              )}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Credentials
+                {!isLoading && (
+                  <Badge variant="secondary">
+                    {filteredCredentials.length}
+                  </Badge>
+                )}
+              </CardTitle>
+              <Button onClick={handleAddCredential}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Credential
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Search Input */}
@@ -206,11 +206,11 @@ export default function AccountDetailsPage() {
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleDeleteCredential(credentialName)}
                         disabled={deleteCredentialMutation.isPending}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
