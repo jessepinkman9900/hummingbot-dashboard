@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Shield, Settings, Trash2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Settings, Trash2, Users, ChevronRight } from 'lucide-react';
 import { useAccounts, useDeleteAccount } from '@/lib/hooks/useAccountsQuery';
 import { AddAccountDialog } from '@/components/portfolio/add-account-dialog';
 import {
@@ -28,7 +28,7 @@ export default function AccountsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const accountsPerPage = 7;
+  const accountsPerPage = 20;
 
   const { 
     data: accounts = [], 
@@ -69,16 +69,7 @@ export default function AccountsPage() {
   const sortedAccounts = [...accounts].sort((a, b) => a.localeCompare(b));
   const totalPages = Math.ceil(sortedAccounts.length / accountsPerPage);
   const startIndex = (currentPage - 1) * accountsPerPage;
-  const endIndex = startIndex + accountsPerPage;
-  const paginatedAccounts = sortedAccounts.slice(startIndex, endIndex);
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
+  const paginatedAccounts = sortedAccounts.slice(startIndex, startIndex + accountsPerPage);
 
   if (error) {
     return (
@@ -96,7 +87,7 @@ export default function AccountsPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -117,59 +108,21 @@ export default function AccountsPage() {
         {/* Accounts List */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                All Accounts 
-                {!isLoading && (
-                  <Badge variant="secondary" className="text-xs">
-                    {accounts.length}
-                  </Badge>
-                )}
-              </CardTitle>
-              {totalPages > 1 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePreviousPage}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              All Accounts
+              {!isLoading && (
+                <Badge variant="secondary">
+                  {accounts.length}
+                </Badge>
               )}
-            </div>
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <Skeleton className="h-12 w-12 rounded-lg" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-[200px]" />
-                        <Skeleton className="h-4 w-[150px]" />
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Skeleton className="h-8 w-20" />
-                      <Skeleton className="h-8 w-8" />
-                    </div>
-                  </div>
+              <div className="space-y-1">
+                {[...Array(8)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             ) : accounts.length === 0 ? (
@@ -185,36 +138,32 @@ export default function AccountsPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-1">
                 {paginatedAccounts.map((accountName) => (
-                  <div key={accountName} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                    <Link 
-                      href={`/accounts/${accountName}`} 
-                      className="flex items-center space-x-4 flex-1 cursor-pointer"
+                  <div
+                    key={accountName}
+                    className="flex items-center justify-between p-3 rounded-md hover:bg-accent cursor-pointer transition-colors group"
+                  >
+                    <Link
+                      href={`/accounts/${accountName}`}
+                      className="flex items-center gap-3 flex-1 min-w-0"
                     >
-                      <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Shield className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg hover:text-primary transition-colors">{accountName}</h3>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          {accountName === 'master' && (
-                            <Badge variant="outline" className="text-xs">
-                              Default Account
-                            </Badge>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="font-medium truncate">{accountName}</span>
+                        {accountName === 'master' && (
+                          <span className="text-sm text-muted-foreground">• Default Account</span>
+                        )}
                       </div>
                     </Link>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="text-xs">
-                        Active
-                      </Badge>
+
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toast.info(`Settings for ${accountName} - Feature coming soon!`)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toast.info(`Settings for ${accountName} - Feature coming soon!`);
+                        }}
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
@@ -223,6 +172,7 @@ export default function AccountsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             handleDeleteAccount(accountName);
                           }}
@@ -230,9 +180,33 @@ export default function AccountsPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="flex items-center px-4 py-2 text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
               </div>
             )}
           </CardContent>

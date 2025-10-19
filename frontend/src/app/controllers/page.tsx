@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Settings, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getControllers, ControllersByType } from '@/lib/api/controllers';
 
@@ -113,7 +113,7 @@ export default function ControllersPage() {
         <div className="space-y-6">
           {/* Page Header */}
           <div className="flex items-center space-x-2">
-            <Settings className="h-8 w-8" />
+            <SlidersHorizontal className="h-8 w-8" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Controllers</h1>
               <p className="text-muted-foreground">
@@ -146,7 +146,7 @@ export default function ControllersPage() {
         <div className="space-y-6">
           {/* Page Header */}
           <div className="flex items-center space-x-2">
-            <Settings className="h-8 w-8" />
+            <SlidersHorizontal className="h-8 w-8" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Controllers</h1>
               <p className="text-muted-foreground">
@@ -158,7 +158,7 @@ export default function ControllersPage() {
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div className="text-red-500">
-                  <Settings className="mx-auto h-12 w-12 mb-2" />
+                  <SlidersHorizontal className="mx-auto h-12 w-12 mb-2" />
                   <h2 className="text-xl font-semibold">Failed to load controllers</h2>
                   <p className="text-muted-foreground">{error}</p>
                 </div>
@@ -178,7 +178,7 @@ export default function ControllersPage() {
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex items-center space-x-2">
-          <Settings className="h-8 w-8" />
+          <SlidersHorizontal className="h-8 w-8" />
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Controllers</h1>
             <p className="text-muted-foreground">
@@ -190,7 +190,7 @@ export default function ControllersPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
+            <SlidersHorizontal className="h-5 w-5" />
             Available Controllers
             <Badge variant="secondary">{filteredControllers.length}</Badge>
           </CardTitle>
@@ -221,7 +221,6 @@ export default function ControllersPage() {
                   onClick={() => handleControllerClick(controller)}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Settings className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className="font-medium truncate">{controller.name}</span>
                       <span className="text-sm text-muted-foreground truncate">• {formatType(controller.type)}</span>

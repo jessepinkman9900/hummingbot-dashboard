@@ -19,7 +19,7 @@ import {
   Plug,
   Bird,
   ChartCandlestick,
-  Settings,
+  SlidersHorizontal,
   FileCode,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -67,7 +67,7 @@ const navigationItems = [
       {
         title: 'Controllers',
         url: '/controllers',
-        icon: Settings,
+        icon: SlidersHorizontal,
       },
       {
         title: 'Scripts',
