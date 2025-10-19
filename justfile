@@ -7,10 +7,11 @@ default:
 publish:
   bash build-npm-package.sh
   cd npx-cli/dist-npm && pnpm publish --no-git-checks
-  git add frontend/package.json npx-cli/package.json
+  git add frontend/package.json frontend/package-lock.json npx-cli/package.json
   git commit -m "Bump npx-cli version to $(node -p "require('./npx-cli/package.json').version")"
   git tag -a "v$(node -p "require('./npx-cli/package.json').version")" -m "Release v$(node -p "require('./npx-cli/package.json').version")"
   git push origin --tags
+  git push origin main
 
 [group('npm')]
 npx-local:
