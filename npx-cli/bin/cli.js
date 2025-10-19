@@ -11,9 +11,7 @@ const portArg = args.find((arg) => arg.startsWith("--port="));
 const apiUrlArg = args.find((arg) => arg.startsWith("--api-url="));
 
 // Parse port (default: 3002)
-const PORT = portArg
-  ? parseInt(portArg.split("=")[1])
-  : 3002;
+const PORT = portArg ? parseInt(portArg.split("=")[1]) : 3002;
 
 // Parse API URL (default: http://localhost:8000)
 const API_URL = apiUrlArg ? apiUrlArg.split("=")[1] : "http://localhost:8000";
@@ -136,19 +134,27 @@ async function startDashboard() {
   log("🚀 Starting dashboard server...", colors.cyan);
   log("⏳ Please wait while the server initializes...\n", colors.cyan);
 
-  // Start Next.js production server
-  // First try to use local next binary, fallback to npx next
-  const localNextBin = path.join(distDir, "node_modules", ".bin", "next");
+  // Start Next.js production server (standalone build)
+  const standaloneServer = path.join(
+    distDir,
+    ".next",
+    "standalone",
+    "server.js"
+  );
   let command, args;
 
   try {
-    fs.accessSync(localNextBin);
+    fs.accessSync(standaloneServer);
+    // Use the standalone server for production
     command = "node";
-    args = [localNextBin, "start", "-p", PORT.toString()];
+    args = [standaloneServer];
   } catch {
-    // Fallback to npx next
-    command = "npx";
-    args = ["next", "start", "-p", PORT.toString()];
+    // Standalone server not found - this is a critical error
+    log("❌ Standalone server not found!", colors.red);
+    log(`   Expected: ${standaloneServer}`, colors.yellow);
+    log("   This package requires a pre-built Next.js standalone application.", colors.yellow);
+    log("   Please ensure the package was built correctly with 'output: standalone' configuration.\n", colors.yellow);
+    process.exit(1);
   }
 
   const server = spawn(command, args, {
@@ -157,6 +163,8 @@ async function startDashboard() {
     env: {
       ...process.env,
       NODE_ENV: "production",
+      PORT: PORT.toString(),
+      HOSTNAME: "0.0.0.0",
       NEXT_PUBLIC_API_BASE_URL: API_URL,
     },
   });
